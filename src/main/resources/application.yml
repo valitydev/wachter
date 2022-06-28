@@ -1,6 +1,5 @@
 server:
   port: '@server.port@'
-  endpoint: wachter
 
 management:
   security:

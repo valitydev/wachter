@@ -13,12 +13,12 @@ import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/${server.endpoint}")
+@RequestMapping("")
 public class WachterController {
 
     private final WachterService wachterService;
 
-    @PostMapping("/request")
+    @PostMapping
     public byte[] getRequest(HttpServletRequest request) throws IOException, TException {
         return wachterService.process(request);
     }
