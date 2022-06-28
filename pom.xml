@@ -7,7 +7,7 @@
     <parent>
         <groupId>dev.vality</groupId>
         <artifactId>service-parent-pom</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.17</version>
     </parent>
 
     <artifactId>wachter</artifactId>
@@ -42,7 +42,6 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>shared-resources</artifactId>
-            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>dev.vality</groupId>
