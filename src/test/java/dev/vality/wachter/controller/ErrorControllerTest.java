@@ -70,7 +70,7 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     void requestJudgementRestricted() {
         when(orgManagerClient.getUserContext(any())).thenReturn(createContextFragment());
         when(bouncerClient.judge(any(), any())).thenReturn(createJudgementRestricted());
-        mvc.perform(post("/wachter/request/")
+        mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwt())
                         .header("Service", "messages")
                         .header("X-Request-ID", randomUUID())
@@ -91,7 +91,7 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     void requestJudgementForbidden() {
         when(orgManagerClient.getUserContext(any())).thenReturn(createContextFragment());
         when(bouncerClient.judge(any(), any())).thenReturn(createJudgementForbidden());
-        mvc.perform(post("/wachter/request/")
+        mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwt())
                         .header("Service", "messages")
                         .header("X-Request-ID", randomUUID())
@@ -110,7 +110,7 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     @Test
     @SneakyThrows
     void requestWithoutServiceHeader() {
-        mvc.perform(post("/wachter/request/")
+        mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwt())
                         .header("X-Request-ID", randomUUID())
                         .header("X-Request-Deadline", Instant.now().plus(1, ChronoUnit.DAYS).toString())
@@ -125,7 +125,7 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     @Test
     @SneakyThrows
     void requestWithWrongServiceHeader() {
-        mvc.perform(post("/wachter/request/")
+        mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwt())
                         .header("X-Request-ID", randomUUID())
                         .header("Service", "wrong")

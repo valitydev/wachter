@@ -70,7 +70,7 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         when(bouncerClient.judge(any(), any())).thenReturn(createJudgementAllowed());
         when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
         when(httpClient.execute(any())).thenReturn(httpResponse);
-        mvc.perform(post("/wachter/request/")
+        mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwt())
                         .header("Service", "messages")
                         .header("X-Request-ID", randomUUID())

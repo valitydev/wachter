@@ -18,7 +18,7 @@ public class WachterController {
 
     private final WachterService wachterService;
 
-    @PostMapping
+    @PostMapping("/wachter")
     public byte[] getRequest(HttpServletRequest request) throws IOException, TException {
         return wachterService.process(request);
     }
