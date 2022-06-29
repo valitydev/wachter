@@ -10,7 +10,7 @@ public class AccessData {
 
     private final String operationId;
     private final String partyId;
-    private final long tokenExpiration;
+    private final long tokenExpirationSec;
     private final String tokenId;
     private final String userId;
     private final String userEmail;

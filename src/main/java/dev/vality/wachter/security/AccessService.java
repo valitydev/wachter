@@ -19,33 +19,31 @@ public class AccessService {
     private boolean authEnabled;
 
     public void checkUserAccess(AccessData accessData) {
-        {
-            log.info("Check the {} rights to perform the operation {} in service {}",
+        log.info("Check the {} rights to perform the operation {} in service {}",
+                accessData.getUserEmail(),
+                accessData.getOperationId(),
+                accessData.getService().getName());
+        var resolution = bouncerService.getResolution(accessData);
+        switch (resolution.getSetField()) {
+            case FORBIDDEN, RESTRICTED -> {
+                if (authEnabled) {
+                    throw new AuthorizationException(
+                            String.format("No rights for %s to perform %s in service %s",
+                                    accessData.getUserEmail(),
+                                    accessData.getOperationId(),
+                                    accessData.getService().getName()));
+                } else {
+                    log.warn("No rights for {} to perform {} in service {}",
+                            accessData.getUserEmail(),
+                            accessData.getOperationId(),
+                            accessData.getService().getName());
+                }
+            }
+            case ALLOWED -> log.info("Rights for {} to perform {} in service {} are allowed",
                     accessData.getUserEmail(),
                     accessData.getOperationId(),
                     accessData.getService().getName());
-            var resolution = bouncerService.getResolution(accessData);
-            switch (resolution.getSetField()) {
-                case FORBIDDEN, RESTRICTED -> {
-                    if (authEnabled) {
-                        throw new AuthorizationException(
-                                String.format("No rights for %s to perform %s in service %s",
-                                        accessData.getUserEmail(),
-                                        accessData.getOperationId(),
-                                        accessData.getService().getName()));
-                    } else {
-                        log.warn("No rights for {} to perform {} in service {}",
-                                accessData.getUserEmail(),
-                                accessData.getOperationId(),
-                                accessData.getService().getName());
-                    }
-                }
-                case ALLOWED -> log.info("Rights for {} to perform {} in service {} are allowed",
-                        accessData.getUserEmail(),
-                        accessData.getOperationId(),
-                        accessData.getService().getName());
-                default -> throw new BouncerException(String.format("Resolution %s cannot be processed", resolution));
-            }
+            default -> throw new BouncerException(String.format("Resolution %s cannot be processed", resolution));
         }
     }
 }

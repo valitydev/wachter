@@ -91,15 +91,13 @@ public class WebConfig {
     }
 
     private Instant getInstant(String xRequestDeadline, String xRequestId) {
-        Instant instant;
         if (DeadlineUtil.containsRelativeValues(xRequestDeadline, xRequestId)) {
-            instant = Instant.now()
+            return Instant.now()
                     .plus(DeadlineUtil.extractMilliseconds(xRequestDeadline, xRequestId), ChronoUnit.MILLIS)
                     .plus(DeadlineUtil.extractSeconds(xRequestDeadline, xRequestId), ChronoUnit.MILLIS)
                     .plus(DeadlineUtil.extractMinutes(xRequestDeadline, xRequestId), ChronoUnit.MILLIS);
         } else {
-            instant = Instant.parse(xRequestDeadline);
+            return Instant.parse(xRequestDeadline);
         }
-        return instant;
     }
 }

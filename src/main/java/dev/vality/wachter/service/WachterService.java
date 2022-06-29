@@ -1,10 +1,9 @@
 package dev.vality.wachter.service;
 
 import dev.vality.wachter.client.WachterClient;
-import dev.vality.wachter.config.properties.WachterProperties;
 import dev.vality.wachter.security.AccessData;
 import dev.vality.wachter.security.AccessService;
-import dev.vality.wachter.utils.ServiceMapper;
+import dev.vality.wachter.mapper.ServiceMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.thrift.TException;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -35,7 +34,7 @@ public class WachterService {
         accessService.checkUserAccess(AccessData.builder()
                 .operationId(methodName)
                 .partyId(partyID)
-                .tokenExpiration(token.getExp())
+                .tokenExpirationSec(token.getExp())
                 .tokenId(token.getId())
                 .userId(token.getSubject())
                 .userEmail(token.getEmail())

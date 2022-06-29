@@ -30,14 +30,12 @@
 
         <!--vality-->
         <dependency>
-            <groupId>dev.vality</groupId>
-            <artifactId>custom-metrics-spring-boot-starter</artifactId>
-            <version>1.0.0</version>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.vality</groupId>
-            <artifactId>custom-actuator-endpoints</artifactId>
-            <version>0.0.1</version>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.vality</groupId>

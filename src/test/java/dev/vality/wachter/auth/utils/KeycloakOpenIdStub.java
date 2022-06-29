@@ -49,7 +49,4 @@ public class KeycloakOpenIdStub {
         return jwtTokenBuilder.generateJwtWithRoles(issuer, roles);
     }
 
-    public String generateJwt(long iat, long exp, String... roles) {
-        return jwtTokenBuilder.generateJwtWithRoles(iat, exp, issuer, roles);
-    }
 }

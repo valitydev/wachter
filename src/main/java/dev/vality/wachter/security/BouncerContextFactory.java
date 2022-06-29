@@ -53,7 +53,7 @@ public class BouncerContextFactory {
                 .setParty(new Entity().setId(accessData.getPartyId())));
         return auth.setToken(new Token().setId(accessData.getTokenId()))
                 .setMethod(bouncerProperties.getAuthMethod())
-                .setExpiration(Instant.ofEpochSecond(accessData.getTokenExpiration()).toString())
+                .setExpiration(Instant.ofEpochSecond(accessData.getTokenExpirationSec()).toString())
                 .setScope(authScopeSet);
     }
 

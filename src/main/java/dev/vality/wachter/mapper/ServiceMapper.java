@@ -1,4 +1,4 @@
-package dev.vality.wachter.utils;
+package dev.vality.wachter.mapper;
 
 import dev.vality.wachter.config.properties.WachterProperties;
 import dev.vality.wachter.exeptions.WachterException;

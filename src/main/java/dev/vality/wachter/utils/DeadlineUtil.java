@@ -13,18 +13,30 @@ import java.util.regex.Pattern;
 @SuppressWarnings("ParameterName")
 public class DeadlineUtil {
 
+    private static final String FLOATING_NUMBER_REGEXP = "[0-9]+([.][0-9]+)?";
+    private static final String MIN_REGEXP = "(?!ms)[m]";
+    private static final String SEC_REGEXP = "[s]";
+    private static final String MILLISECOND_REGEXP = "[m][s]";
 
     public static boolean containsRelativeValues(String xRequestDeadline, String xRequestId) {
-        return (extractMinutes(xRequestDeadline, xRequestId) + extractSeconds(xRequestDeadline, xRequestId) +
-                extractMilliseconds(xRequestDeadline, xRequestId)) > 0;
+        return extractMinutes(xRequestDeadline, xRequestId) + extractSeconds(xRequestDeadline, xRequestId) +
+                extractMilliseconds(xRequestDeadline, xRequestId) > 0;
     }
 
     public static Long extractMinutes(String xRequestDeadline, String xRequestId) {
         String format = "minutes";
 
-        checkNegativeValues(xRequestDeadline, xRequestId, "([-][0-9]+([.][0-9]+)?(?!ms)[m])", format);
+        checkNegativeValues(
+                xRequestDeadline,
+                xRequestId,
+                "([-]" + FLOATING_NUMBER_REGEXP + MIN_REGEXP + ")",
+                format);
 
-        Double minutes = extractValue(xRequestDeadline, "([0-9]+([.][0-9]+)?(?!ms)[m])", xRequestId, format);
+        Double minutes = extractValue(
+                xRequestDeadline,
+                "(" + FLOATING_NUMBER_REGEXP + MIN_REGEXP + ")",
+                xRequestId,
+                format);
 
         return Optional.ofNullable(minutes).map(min -> min * 60000.0).map(Double::longValue).orElse(0L);
     }
@@ -32,9 +44,17 @@ public class DeadlineUtil {
     public static Long extractSeconds(String xRequestDeadline, String xRequestId) {
         String format = "seconds";
 
-        checkNegativeValues(xRequestDeadline, xRequestId, "([-][0-9]+([.][0-9]+)?[s])", format);
+        checkNegativeValues(
+                xRequestDeadline,
+                xRequestId,
+                "([-]" + FLOATING_NUMBER_REGEXP + SEC_REGEXP + ")",
+                format);
 
-        Double seconds = extractValue(xRequestDeadline, "([0-9]+([.][0-9]+)?[s])", xRequestId, format);
+        Double seconds = extractValue(
+                xRequestDeadline,
+                "(" + FLOATING_NUMBER_REGEXP + SEC_REGEXP + ")",
+                xRequestId,
+                format);
 
         return Optional.ofNullable(seconds).map(s -> s * 1000.0).map(Double::longValue).orElse(0L);
     }
@@ -42,9 +62,17 @@ public class DeadlineUtil {
     public static Long extractMilliseconds(String xRequestDeadline, String xRequestId) {
         String format = "milliseconds";
 
-        checkNegativeValues(xRequestDeadline, xRequestId, "([-][0-9]+([.][0-9]+)?[m][s])", format);
+        checkNegativeValues(
+                xRequestDeadline,
+                xRequestId,
+                "([-]" + FLOATING_NUMBER_REGEXP + MILLISECOND_REGEXP + ")",
+                format);
 
-        Double milliseconds = extractValue(xRequestDeadline, "([0-9]+([.][0-9]+)?[m][s])", xRequestId, format);
+        Double milliseconds = extractValue(
+                xRequestDeadline,
+                "(" + FLOATING_NUMBER_REGEXP + MILLISECOND_REGEXP + ")",
+                xRequestId,
+                format);
 
         if (milliseconds != null && Math.ceil(milliseconds % 1) > 0) {
             throw new DeadlineException(
@@ -63,7 +91,7 @@ public class DeadlineUtil {
     }
 
     private static Double extractValue(String xRequestDeadline, String formatRegex, String xRequestId, String format) {
-        String numberRegex = "([0-9]+([.][0-9]+)?)";
+        String numberRegex = "(" + FLOATING_NUMBER_REGEXP + ")";
 
         List<String> doubles = new ArrayList<>();
         for (String string : match(formatRegex, xRequestDeadline)) {

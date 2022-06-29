@@ -6,12 +6,11 @@ management:
   server:
     port: '@management.port@'
   metrics:
+    tags:
+      application: '@project.name@'
     export:
-      statsd:
-        flavor: etsy
-        enabled: false
       prometheus:
-        enabled: false
+        enabled: true
   endpoint:
     health:
       show-details: always
