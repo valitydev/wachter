@@ -31,7 +31,7 @@ public class WachterService {
         var methodName = getMethodName(contentData);
         var partyID = keycloakService.getPartyId();
         var token = keycloakService.getAccessToken();
-        WachterProperties.Services service = serviceMapper.getService(request);
+        var service = serviceMapper.getService(request);
         accessService.checkUserAccess(AccessData.builder()
                 .operationId(methodName)
                 .partyId(partyID)
