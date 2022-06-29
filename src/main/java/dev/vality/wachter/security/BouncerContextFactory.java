@@ -41,11 +41,9 @@ public class BouncerContextFactory {
 
     private ContextFragment buildContextFragment(AccessData accessData) {
         var env = buildEnvironment();
-        var contextCommonApi = buildCommonApiContext(accessData);
         return new ContextFragment()
                 .setAuth(buildAuth(accessData))
-                .setEnv(env)
-                .setCapi(contextCommonApi);
+                .setEnv(env);
     }
 
     private Auth buildAuth(AccessData accessData) {
@@ -65,13 +63,6 @@ public class BouncerContextFactory {
         return new Environment()
                 .setDeployment(deployment)
                 .setNow(Instant.now().toString());
-    }
-
-    private ContextCommonAPI buildCommonApiContext(AccessData accessData) {
-        return new ContextCommonAPI()
-                .setOp(new CommonAPIOperation()
-                        .setId(accessData.getOperationId())
-                        .setParty(new Entity().setId(accessData.getPartyId())));
     }
 
 }
