@@ -1,19 +1,16 @@
 package dev.vality.wachter.service;
 
 import dev.vality.wachter.client.WachterClient;
+import dev.vality.wachter.mapper.ServiceMapper;
 import dev.vality.wachter.security.AccessData;
 import dev.vality.wachter.security.AccessService;
-import dev.vality.wachter.mapper.ServiceMapper;
 import lombok.RequiredArgsConstructor;
-import org.apache.thrift.TException;
+import lombok.SneakyThrows;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-import static dev.vality.wachter.utils.MethodNameReader.getMethodName;
 
 @RequiredArgsConstructor
 @Service
@@ -23,11 +20,12 @@ public class WachterService {
     private final AccessService accessService;
     private final WachterClient wachterClient;
     private final ServiceMapper serviceMapper;
+    private final MethodNameReaderService methodNameReaderService;
 
-
-    public byte[] process(HttpServletRequest request) throws IOException, TException {
+    @SneakyThrows
+    public byte[] process(HttpServletRequest request) {
         byte[] contentData = getContentData(request);
-        var methodName = getMethodName(contentData);
+        var methodName = methodNameReaderService.getMethodName(contentData);
         var partyID = keycloakService.getPartyId();
         var token = keycloakService.getAccessToken();
         var service = serviceMapper.getService(request);
@@ -43,10 +41,10 @@ public class WachterService {
         return wachterClient.send(request, contentData, service);
     }
 
-    private byte[] getContentData(HttpServletRequest request) throws IOException {
+    @SneakyThrows
+    private byte[] getContentData(HttpServletRequest request) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         IOUtils.copy(request.getInputStream(), baos);
         return baos.toByteArray();
     }
-
 }

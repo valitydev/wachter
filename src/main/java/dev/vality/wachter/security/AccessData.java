@@ -14,6 +14,6 @@ public class AccessData {
     private final String tokenId;
     private final String userId;
     private final String userEmail;
-    private final WachterProperties.Services service;
+    private final WachterProperties.Service service;
 
 }

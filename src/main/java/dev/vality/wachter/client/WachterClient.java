@@ -2,6 +2,7 @@ package dev.vality.wachter.client;
 
 import dev.vality.wachter.config.properties.WachterProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -10,7 +11,6 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.util.Enumeration;
 
 @Service
@@ -19,9 +19,8 @@ public class WachterClient {
 
     private final HttpClient httpclient;
 
-    public byte[] send(HttpServletRequest request,
-                       byte[] contentData,
-                       WachterProperties.Services service) throws IOException {
+    @SneakyThrows
+    public byte[] send(HttpServletRequest request, byte[] contentData, WachterProperties.Service service) {
         HttpPost httppost = new HttpPost(service.getUrl());
         setHeader(request, httppost);
         httppost.setEntity(new ByteArrayEntity(contentData));

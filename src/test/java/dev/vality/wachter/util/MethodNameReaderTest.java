@@ -1,7 +1,7 @@
 package dev.vality.wachter.util;
 
+import dev.vality.wachter.service.MethodNameReaderService;
 import dev.vality.wachter.testutil.TMessageUtil;
-import dev.vality.wachter.utils.MethodNameReader;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.junit.jupiter.api.Test;
@@ -16,10 +16,12 @@ class MethodNameReaderTest {
     @Autowired
     private TProtocolFactory protocolFactory;
 
+    @Autowired
+    private MethodNameReaderService methodNameReaderService;
+
     @Test
     void readMethodName() throws TException {
         byte[] message = TMessageUtil.createTMessage(protocolFactory);
-        assertEquals("methodName", MethodNameReader.getMethodName(message));
+        assertEquals("methodName", methodNameReaderService.getMethodName(message));
     }
-
 }

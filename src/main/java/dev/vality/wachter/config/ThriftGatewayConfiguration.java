@@ -11,7 +11,7 @@ public class ThriftGatewayConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(TProtocolFactory.class)
-    TProtocolFactory thriftProtocolFactory() {
+    public TProtocolFactory thriftProtocolFactory() {
         return new TBinaryProtocol.Factory();
     }
 
