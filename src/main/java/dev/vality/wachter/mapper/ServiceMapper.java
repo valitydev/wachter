@@ -13,12 +13,12 @@ public class ServiceMapper {
 
     private final WachterProperties wachterProperties;
 
-    public WachterProperties.Services getService(HttpServletRequest request) {
+    public WachterProperties.Service getService(HttpServletRequest request) {
         if (request.getHeader(wachterProperties.getServiceHeader()) == null) {
             throw new WachterException(
                     String.format("Header \"%s\" must be set", wachterProperties.getServiceHeader()));
         }
-        WachterProperties.Services service = wachterProperties.getServices()
+        WachterProperties.Service service = wachterProperties.getServices()
                 .get(request.getHeader(wachterProperties.getServiceHeader()));
 
         if (service == null) {

@@ -20,14 +20,9 @@
         <server.port>8022</server.port>
         <management.port>8023</management.port>
         <exposed.ports>${server.port} ${management.port}</exposed.ports>
-        <jackson-version>2.12.5</jackson-version>
-        <spring-version>2.5.3</spring-version>
-        <javax-annotation-api-version>1.3.2</javax-annotation-api-version>
-        <jaxb-version>2.3.1</jaxb-version>
     </properties>
 
     <dependencies>
-
         <!--vality-->
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -54,11 +49,11 @@
         <dependency>
             <groupId>dev.vality.geck</groupId>
             <artifactId>serializer</artifactId>
-            <version>0.0.1</version>
         </dependency>
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>damsel</artifactId>
+            <version>1.566-03bbf48</version>
         </dependency>
 
         <!--spring-->
@@ -145,23 +140,19 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
         </dependency>
         <dependency>
             <groupId>javax.annotation</groupId>
             <artifactId>javax.annotation-api</artifactId>
-            <version>${javax-annotation-api-version}</version>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
-            <version>2.0.1.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
-            <version>${jaxb-version}</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
@@ -182,9 +173,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock-jre8-standalone</artifactId>
+            <version>2.33.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-contract-wiremock</artifactId>
-            <version>3.0.3</version>
+            <version>3.1.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

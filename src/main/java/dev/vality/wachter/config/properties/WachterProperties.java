@@ -16,11 +16,11 @@ import java.util.Map;
 public class WachterProperties {
 
     private String serviceHeader;
-    private Map<String, Services> services;
+    private Map<String, Service> services;
 
     @Getter
     @Setter
-    public static class Services {
+    public static class Service {
 
         private String name;
         private String url;

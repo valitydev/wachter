@@ -9,14 +9,17 @@ import org.springframework.stereotype.Service;
 public class KeycloakService {
 
     public String getPartyId() {
-        return ((KeycloakPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getName();
+        return ((KeycloakPrincipal) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal())
+                .getName();
     }
 
     public AccessToken getAccessToken() {
-        KeycloakPrincipal keycloakPrincipal = (KeycloakPrincipal) SecurityContextHolder.getContext()
+        return ((KeycloakPrincipal) SecurityContextHolder.getContext()
                 .getAuthentication()
-                .getPrincipal();
-
-        return keycloakPrincipal.getKeycloakSecurityContext().getToken();
+                .getPrincipal())
+                .getKeycloakSecurityContext()
+                .getToken();
     }
 }
