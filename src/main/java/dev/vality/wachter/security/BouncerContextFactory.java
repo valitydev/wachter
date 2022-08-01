@@ -34,7 +34,7 @@ public class BouncerContextFactory {
         var userFragment = orgManagerService.getUserAuthContext(
                 keycloakService.getAccessToken().getSubject());
         var context = new Context();
-        context.putToFragments(accessData.getService().getName(), fragment);
+        context.putToFragments(bouncerProperties.getContextFragmentId(), fragment);
         context.putToFragments("user", userFragment);
         return context;
     }
@@ -43,7 +43,8 @@ public class BouncerContextFactory {
         var env = buildEnvironment();
         return new ContextFragment()
                 .setAuth(buildAuth(accessData))
-                .setEnv(env);
+                .setEnv(env)
+                .setWachter(buildWachterContext(accessData));
     }
 
     private Auth buildAuth(AccessData accessData) {
@@ -63,5 +64,13 @@ public class BouncerContextFactory {
         return new Environment()
                 .setDeployment(deployment)
                 .setNow(Instant.now().toString());
+    }
+
+    private ContextWachter buildWachterContext(AccessData accessData) {
+        return new ContextWachter()
+                .setOp(new WachterOperation()
+                        .setId(accessData.getOperationId())
+                        .setServiceName(accessData.getService().getName())
+                        .setParty(new Entity().setId(accessData.getPartyId())));
     }
 }
