@@ -17,7 +17,7 @@ url на который необходимо спроксировать запр
 пользователя в [bouncer](https://github.com/valitydev/bouncer) 
 формируя [контекст](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/security/BouncerContextFactory.java)
 на основе [данных](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/security/AccessData.java),
-полученных из запроса.
+полученных из запроса. Контекст формируется с учетом фрагмента [wachter](https://github.com/valitydev/bouncer-proto/blob/master/proto/context_v1.thrift#L49)
 6. Если доступ разрешен сервис [отправляет запрос](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/client/WachterClient.java) 
 на ранее смаппленный урл.
 7. Полученный ответ [возвращает](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/controller/WachterController.java) control-center.
