@@ -87,6 +87,7 @@ bouncer:
   auth-method: SessionToken
   realm: external
   rule-set-id: change_it
+  context-fragment-id: wachter
   auth:
     enabled: true
 

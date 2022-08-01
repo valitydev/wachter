@@ -23,4 +23,6 @@ public class BouncerProperties {
     private String realm;
     @NotEmpty
     private String ruleSetId;
+    @NotEmpty
+    private String contextFragmentId;
 }
