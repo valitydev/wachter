@@ -12,13 +12,13 @@
 wachter получает partyId и AccessToken. 
 4. По имени сервиса из header wachter
 [маппит](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/mapper/ServiceMapper.java)
-url на который необходимо спроксировать запрос.
+url, на который необходимо спроксировать запрос.
 5. Далее сервис проверяет возможность [авторизации](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/security/AccessService.java) 
-пользователя в [bouncer](https://github.com/valitydev/bouncer) 
+пользователя в [bouncer](https://github.com/valitydev/bouncer),
 формируя [контекст](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/security/BouncerContextFactory.java)
 на основе [данных](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/security/AccessData.java),
 полученных из запроса. Контекст формируется с учетом фрагмента [wachter](https://github.com/valitydev/bouncer-proto/blob/master/proto/context_v1.thrift#L49)
-6. Если доступ разрешен сервис [отправляет запрос](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/client/WachterClient.java) 
+6. Если доступ разрешен, сервис [отправляет запрос](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/client/WachterClient.java) 
 на ранее смаппленный урл.
 7. Полученный ответ [возвращает](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/controller/WachterController.java) control-center.
 
