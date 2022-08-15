@@ -6,7 +6,6 @@ import dev.vality.bouncer.ctx.ContextFragmentType;
 import dev.vality.bouncer.decisions.Context;
 import dev.vality.wachter.config.properties.BouncerProperties;
 import dev.vality.wachter.service.KeycloakService;
-import dev.vality.wachter.service.OrgManagerService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.thrift.TSerializer;
@@ -21,7 +20,6 @@ import java.util.Set;
 public class BouncerContextFactory {
 
     private final BouncerProperties bouncerProperties;
-    private final OrgManagerService orgManagerService;
     private final KeycloakService keycloakService;
 
     @SneakyThrows
@@ -31,11 +29,8 @@ public class BouncerContextFactory {
         var fragment = new dev.vality.bouncer.ctx.ContextFragment()
                 .setType(ContextFragmentType.v1_thrift_binary)
                 .setContent(serializer.serialize(contextFragment));
-        var userFragment = orgManagerService.getUserAuthContext(
-                keycloakService.getAccessToken().getSubject());
         var context = new Context();
         context.putToFragments(bouncerProperties.getContextFragmentId(), fragment);
-        context.putToFragments("user", userFragment);
         return context;
     }
 
@@ -67,10 +62,14 @@ public class BouncerContextFactory {
     }
 
     private ContextWachter buildWachterContext(AccessData accessData) {
+        var resource = keycloakService.getAccessToken().getResourceAccess();
+        Set<Access> access = new HashSet<>();
+        resource.forEach((id, roles) -> access.add(new Access().setId(id).setRoles(roles.getRoles())));
         return new ContextWachter()
                 .setOp(new WachterOperation()
                         .setId(accessData.getOperationId())
                         .setServiceName(accessData.getService().getName())
-                        .setParty(new Entity().setId(accessData.getPartyId())));
+                        .setParty(new Entity().setId(accessData.getPartyId()))
+                        .setAccess(access));
     }
 }
