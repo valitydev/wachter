@@ -1,7 +1,6 @@
 package dev.vality.wachter.controller;
 
 import dev.vality.bouncer.decisions.ArbiterSrv;
-import dev.vality.orgmanagement.AuthContextProviderSrv;
 import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
 import dev.vality.wachter.testutil.TMessageUtil;
 import lombok.SneakyThrows;
@@ -20,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static dev.vality.wachter.testutil.ContextUtil.createContextFragment;
 import static dev.vality.wachter.testutil.ContextUtil.createJudgementAllowed;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
