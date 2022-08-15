@@ -26,21 +26,6 @@ import java.util.List;
 public class ApplicationConfig {
 
     @Bean
-    public AuthContextProviderSrv.Iface orgManagerClient(
-            @Value("${orgManager.url}") Resource resource,
-            @Value("${orgManager.networkTimeout}") int networkTimeout) throws IOException {
-        return new THSpawnClientBuilder()
-                .withNetworkTimeout(networkTimeout)
-                .withMetaExtensions(List.of(
-                        UserIdentityIdExtensionKit.INSTANCE,
-                        UserIdentityEmailExtensionKit.INSTANCE,
-                        UserIdentityUsernameExtensionKit.INSTANCE,
-                        UserIdentityRealmExtensionKit.INSTANCE))
-                .withAddress(resource.getURI())
-                .build(AuthContextProviderSrv.Iface.class);
-    }
-
-    @Bean
     public ArbiterSrv.Iface bouncerClient(
             @Value("${bouncer.url}") Resource resource,
             @Value("${bouncer.networkTimeout}") int networkTimeout) throws IOException {

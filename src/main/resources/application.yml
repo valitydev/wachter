@@ -76,10 +76,6 @@ http-client:
   connectionRequestTimeout: 10000
   socketTimeout: 10000
 
-orgManager:
-  url: http://localhost:8022/org/v1/auth-context
-  networkTimeout: 5000
-
 bouncer:
   url: http://localhost:8022/v1/arbiter
   networkTimeout: 10000
