@@ -1,7 +1,6 @@
 package dev.vality.wachter.controller;
 
 import dev.vality.bouncer.decisions.ArbiterSrv;
-import dev.vality.orgmanagement.AuthContextProviderSrv;
 import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
 import dev.vality.wachter.exeptions.AuthorizationException;
 import dev.vality.wachter.exeptions.WachterException;
@@ -35,8 +34,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
     @MockBean
-    public AuthContextProviderSrv.Iface orgManagerClient;
-    @MockBean
     public ArbiterSrv.Iface bouncerClient;
     @MockBean
     private HttpClient httpClient;
@@ -55,7 +52,7 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     @BeforeEach
     public void init() {
         mocks = MockitoAnnotations.openMocks(this);
-        preparedMocks = new Object[]{httpClient, orgManagerClient, bouncerClient};
+        preparedMocks = new Object[]{httpClient, bouncerClient};
     }
 
     @AfterEach
@@ -68,7 +65,6 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     @Test
     @SneakyThrows
     void requestJudgementRestricted() {
-        when(orgManagerClient.getUserContext(any())).thenReturn(createContextFragment());
         when(bouncerClient.judge(any(), any())).thenReturn(createJudgementRestricted());
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwt())
@@ -82,14 +78,12 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .andExpect(result -> assertEquals("No rights for darkside-the-best@mail.com to " +
                                 "perform methodName in service messages",
                         result.getResolvedException().getMessage()));
-        verify(orgManagerClient, times(1)).getUserContext(any());
         verify(bouncerClient, times(1)).judge(any(), any());
     }
 
     @Test
     @SneakyThrows
     void requestJudgementForbidden() {
-        when(orgManagerClient.getUserContext(any())).thenReturn(createContextFragment());
         when(bouncerClient.judge(any(), any())).thenReturn(createJudgementForbidden());
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwt())
@@ -103,7 +97,6 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .andExpect(result -> assertEquals("No rights for darkside-the-best@mail.com to " +
                                 "perform methodName in service messages",
                         result.getResolvedException().getMessage()));
-        verify(orgManagerClient, times(1)).getUserContext(any());
         verify(bouncerClient, times(1)).judge(any(), any());
     }
 

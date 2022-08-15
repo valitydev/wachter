@@ -1,11 +1,6 @@
 package dev.vality.wachter.config;
 
 import dev.vality.bouncer.decisions.ArbiterSrv;
-import dev.vality.orgmanagement.AuthContextProviderSrv;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionKit;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
 import dev.vality.woody.thrift.impl.http.THSpawnClientBuilder;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
@@ -20,25 +15,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
-import java.util.List;
 
 @Configuration
 public class ApplicationConfig {
-
-    @Bean
-    public AuthContextProviderSrv.Iface orgManagerClient(
-            @Value("${orgManager.url}") Resource resource,
-            @Value("${orgManager.networkTimeout}") int networkTimeout) throws IOException {
-        return new THSpawnClientBuilder()
-                .withNetworkTimeout(networkTimeout)
-                .withMetaExtensions(List.of(
-                        UserIdentityIdExtensionKit.INSTANCE,
-                        UserIdentityEmailExtensionKit.INSTANCE,
-                        UserIdentityUsernameExtensionKit.INSTANCE,
-                        UserIdentityRealmExtensionKit.INSTANCE))
-                .withAddress(resource.getURI())
-                .build(AuthContextProviderSrv.Iface.class);
-    }
 
     @Bean
     public ArbiterSrv.Iface bouncerClient(

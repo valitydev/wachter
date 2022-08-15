@@ -1,7 +1,6 @@
 package dev.vality.wachter.controller;
 
 import dev.vality.bouncer.decisions.ArbiterSrv;
-import dev.vality.orgmanagement.AuthContextProviderSrv;
 import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
 import dev.vality.wachter.testutil.TMessageUtil;
 import lombok.SneakyThrows;
@@ -20,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static dev.vality.wachter.testutil.ContextUtil.createContextFragment;
 import static dev.vality.wachter.testutil.ContextUtil.createJudgementAllowed;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,8 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
-    @MockBean
-    public AuthContextProviderSrv.Iface orgManagerClient;
     @MockBean
     public ArbiterSrv.Iface bouncerClient;
     @MockBean
@@ -54,7 +50,7 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     @BeforeEach
     public void init() {
         mocks = MockitoAnnotations.openMocks(this);
-        preparedMocks = new Object[]{httpClient, orgManagerClient, bouncerClient};
+        preparedMocks = new Object[]{httpClient, bouncerClient};
     }
 
     @AfterEach
@@ -66,7 +62,6 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     @Test
     @SneakyThrows
     void requestSuccess() {
-        when(orgManagerClient.getUserContext(any())).thenReturn(createContextFragment());
         when(bouncerClient.judge(any(), any())).thenReturn(createJudgementAllowed());
         when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
         when(httpClient.execute(any())).thenReturn(httpResponse);
@@ -78,7 +73,6 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
-        verify(orgManagerClient, times(1)).getUserContext(any());
         verify(bouncerClient, times(1)).judge(any(), any());
         verify(httpClient, times(1)).execute(any());
     }

@@ -39,12 +39,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>bouncer-proto</artifactId>
-            <version>1.41-5628c61</version>
-        </dependency>
-        <dependency>
-            <groupId>dev.vality</groupId>
-            <artifactId>org-management-proto</artifactId>
-            <version>1.10-f433223</version>
+            <version>1.42-945ea9f</version>
         </dependency>
         <dependency>
             <groupId>dev.vality.geck</groupId>
