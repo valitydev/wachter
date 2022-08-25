@@ -44,12 +44,17 @@ public class BouncerContextFactory {
 
     private Auth buildAuth(AccessData accessData) {
         var auth = new Auth();
+        var resource = keycloakService.getAccessToken().getResourceAccess();
+        Set<ResourceAccess> access = new HashSet<>();
+        resource.forEach((id, roles) -> access.add(new ResourceAccess().setId(id).setRoles(roles.getRoles())));
         Set<AuthScope> authScopeSet = new HashSet<>();
         authScopeSet.add(new AuthScope()
                 .setParty(new Entity().setId(accessData.getPartyId())));
         return auth.setToken(new Token().setId(accessData.getTokenId()))
                 .setMethod(bouncerProperties.getAuthMethod())
                 .setExpiration(Instant.ofEpochSecond(accessData.getTokenExpirationSec()).toString())
+                .setToken(new Token()
+                        .setAccess(access))
                 .setScope(authScopeSet);
     }
 
@@ -62,14 +67,9 @@ public class BouncerContextFactory {
     }
 
     private ContextWachter buildWachterContext(AccessData accessData) {
-        var resource = keycloakService.getAccessToken().getResourceAccess();
-        Set<Access> access = new HashSet<>();
-        resource.forEach((id, roles) -> access.add(new Access().setId(id).setRoles(roles.getRoles())));
         return new ContextWachter()
                 .setOp(new WachterOperation()
                         .setId(accessData.getOperationId())
-                        .setServiceName(accessData.getService().getName())
-                        .setParty(new Entity().setId(accessData.getPartyId()))
-                        .setAccess(access));
+                        .setServiceName(accessData.getService().getName()));
     }
 }
