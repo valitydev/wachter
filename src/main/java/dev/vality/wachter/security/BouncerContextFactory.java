@@ -42,7 +42,7 @@ public class BouncerContextFactory {
         contextFragment.setAuth(buildAuth(accessData))
                 .setEnv(env)
                 .setWachter(buildWachterContext(accessData));
-        log.info("Context fragment to bouncer {}", contextFragment);
+        log.debug("Context fragment to bouncer {}", contextFragment);
         return contextFragment;
     }
 
