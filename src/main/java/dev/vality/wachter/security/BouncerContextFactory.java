@@ -8,6 +8,7 @@ import dev.vality.wachter.config.properties.BouncerProperties;
 import dev.vality.wachter.service.KeycloakService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TSerializer;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class BouncerContextFactory {
@@ -36,10 +38,12 @@ public class BouncerContextFactory {
 
     private ContextFragment buildContextFragment(AccessData accessData) {
         var env = buildEnvironment();
-        return new ContextFragment()
-                .setAuth(buildAuth(accessData))
+        var contextFragment = new ContextFragment();
+        contextFragment.setAuth(buildAuth(accessData))
                 .setEnv(env)
                 .setWachter(buildWachterContext(accessData));
+        log.info("Context fragment to bouncer {}", contextFragment);
+        return contextFragment;
     }
 
     private Auth buildAuth(AccessData accessData) {
@@ -50,7 +54,7 @@ public class BouncerContextFactory {
         Set<AuthScope> authScopeSet = new HashSet<>();
         authScopeSet.add(new AuthScope()
                 .setParty(new Entity().setId(accessData.getPartyId())));
-        return auth.setToken(new Token().setId(accessData.getTokenId()))
+        return auth
                 .setMethod(bouncerProperties.getAuthMethod())
                 .setExpiration(Instant.ofEpochSecond(accessData.getTokenExpirationSec()).toString())
                 .setToken(new Token()
