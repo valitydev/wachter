@@ -29,9 +29,9 @@ public class WachterService {
         byte[] contentData = getContentData(request);
         var methodName = methodNameReaderService.getMethodName(contentData);
         var token = keycloakService.getAccessToken();
-        var resource = token.getResourceAccess();
+        var resources = token.getResourceAccess();
         List<String> tokenRoles = new ArrayList<>();
-        resource.forEach((id, role) -> tokenRoles.addAll(role.getRoles()));
+        resources.forEach((id, role) -> tokenRoles.addAll(role.getRoles()));
         var service = serviceMapper.getService(request);
         accessService.checkUserAccess(AccessData.builder()
                 .methodName(methodName)

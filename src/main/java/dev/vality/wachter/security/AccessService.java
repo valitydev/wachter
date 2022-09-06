@@ -23,7 +23,7 @@ public class AccessService {
         if (authEnabled) {
             roleAccessService.checkRolesAccess(accessData);
         } else {
-            log.warn("Access check was not performed for user {} to method {} in service {}",
+            log.warn("Authorization disabled. Access check was not performed for user {} to method {} in service {}",
                     accessData.getUserEmail(),
                     accessData.getMethodName(),
                     accessData.getServiceName());
