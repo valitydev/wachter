@@ -57,7 +57,23 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
     @Test
     @SneakyThrows
-    void requestSuccess() {
+    void requestSuccessWithServiceRole() {
+        when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
+        when(httpClient.execute(any())).thenReturn(httpResponse);
+        mvc.perform(post("/wachter")
+                        .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
+                        .header("Service", "messages")
+                        .header("X-Request-ID", randomUUID())
+                        .header("X-Request-Deadline", Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .content(TMessageUtil.createTMessage(protocolFactory)))
+                .andDo(print())
+                .andExpect(status().is2xxSuccessful());
+        verify(httpClient, times(1)).execute(any());
+    }
+
+    @Test
+    @SneakyThrows
+    void requestSuccessWithMethodRole() {
         when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
         when(httpClient.execute(any())).thenReturn(httpResponse);
         mvc.perform(post("/wachter")
