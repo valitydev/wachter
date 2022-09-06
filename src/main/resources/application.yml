@@ -34,58 +34,58 @@ info:
   stage: dev
 
 wachter:
+  auth:
+    enabled: true
   serviceHeader: Service
   services:
-    messages:
-      name: messages
-      url: http://localhost:8097/v1/messages
-    automaton:
-      name: automaton
-      url: http://localhost:8022/v1/automaton
-    repairer:
-      name: repairer
-      url: http://localhost:8022/v1/repair/withdrawal/session
-    claimManagement:
-      name: claimManagement
+    ClaimManagement:
+      name: ClaimManagement
       url: http://localhost:8097/v1/cm
-    fistfulAdmin:
-      name: fistfulAdmin
-      url: http://localhost:8022/v1/admin
-    fistfulStatistics:
-      name: fistfulStatistics
-      url: http://localhost:8022/fistful/stat
-    fileStorage:
-      name: fileStorage
-      url: http://localhost:8022/file_storage
-    deanonimus:
-      name: deanonimus
-      url: http://localhost:8022/deanonimus
-    merchantStatistics:
-      name: merchantStatistics
-      url: http://localhost:8022/stat
-    paymentProcessing:
-      name: paymentProcessing
-      url: http://localhost:8022/v1/processing/invoicing
-    domain:
-      name: domain
+    DepositManagement:
+      name: DepositManagement
+      url: http://localhost:8022/v1/deposit
+    Domain:
+      name: Domain
       url: http://localhost:8022/v1/domain/repository
+    DominantCache:
+      name: DominantCache
+      url: http://localhost:8022/v1/dominant/cache
+    FileStorage:
+      name: FileStorage
+      url: http://localhost:8022/file_storage
+    FistfulStatistics:
+      name: FistfulStatistics
+      url: http://localhost:8022/fistful/stat
+    MerchantStatistics:
+      name: MerchantStatistics
+      url: http://localhost:8022/v3/stat
+    Messages:
+      name: Messages
+      url: http://localhost:8097/v1/messages
+    Invoicing:
+      name: Invoicing
+      url: http://localhost:8097/v1/processing/invoicin
+    PartyManagement:
+      name: PartyManagement
+      url: http://localhost:8097/v1/processing/partymgmt
+    PayoutManagement:
+      name: PayoutManagement
+      url: http://localhost:8097/payout/management
+    RepairManagement:
+      name: repairManagement
+      url: http://localhost:8097/v1/repair
+    WalletManagement:
+      name: WalletManagement
+      url: http://localhost:8022/v1/wallet
+    WithdrawalManagement:
+      name: WithdrawalManagement
+      url: http://localhost:8022/v1/wallet
 
 
 http-client:
   connectTimeout: 10000
   connectionRequestTimeout: 10000
   socketTimeout: 10000
-
-bouncer:
-  url: http://localhost:8022/v1/arbiter
-  networkTimeout: 10000
-  deployment-id: production
-  auth-method: SessionToken
-  realm: external
-  rule-set-id: change_it
-  context-fragment-id: wachter
-  auth:
-    enabled: true
 
 keycloak:
   realm: internal

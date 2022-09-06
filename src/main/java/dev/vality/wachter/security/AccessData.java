@@ -1,19 +1,17 @@
 package dev.vality.wachter.security;
 
-import dev.vality.wachter.config.properties.WachterProperties;
 import lombok.Builder;
 import lombok.Data;
+
+import java.util.List;
 
 @Builder
 @Data
 public class AccessData {
 
-    private final String operationId;
-    private final String partyId;
-    private final long tokenExpirationSec;
-    private final String tokenId;
-    private final String userId;
+    private final String methodName;
     private final String userEmail;
-    private final WachterProperties.Service service;
+    private final List<String> tokenRoles;
+    private final String serviceName;
 
 }

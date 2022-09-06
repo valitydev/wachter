@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -25,7 +26,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
+@TestPropertySource(properties = {"wachter.auth.enabled=false"})
+class WachterControllerDisabledAuthTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
     @MockBean
     private HttpClient httpClient;
@@ -57,27 +59,11 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
     @Test
     @SneakyThrows
-    void requestSuccessWithServiceRole() {
+    void requestSuccess() {
         when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
         when(httpClient.execute(any())).thenReturn(httpResponse);
         mvc.perform(post("/wachter")
-                        .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
-                        .header("Service", "messages")
-                        .header("X-Request-ID", randomUUID())
-                        .header("X-Request-Deadline", Instant.now().plus(1, ChronoUnit.DAYS).toString())
-                        .content(TMessageUtil.createTMessage(protocolFactory)))
-                .andDo(print())
-                .andExpect(status().is2xxSuccessful());
-        verify(httpClient, times(1)).execute(any());
-    }
-
-    @Test
-    @SneakyThrows
-    void requestSuccessWithMethodRole() {
-        when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
-        when(httpClient.execute(any())).thenReturn(httpResponse);
-        mvc.perform(post("/wachter")
-                        .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
+                        .header("Authorization", "Bearer " + generateSimpleJwtWithoutRoles())
                         .header("Service", "messages")
                         .header("X-Request-ID", randomUUID())
                         .header("X-Request-Deadline", Instant.now().plus(1, ChronoUnit.DAYS).toString())

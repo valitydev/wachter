@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -26,19 +28,18 @@ public class WachterService {
     public byte[] process(HttpServletRequest request) {
         byte[] contentData = getContentData(request);
         var methodName = methodNameReaderService.getMethodName(contentData);
-        var partyID = keycloakService.getPartyId();
         var token = keycloakService.getAccessToken();
+        var resources = token.getResourceAccess();
+        List<String> tokenRoles = new ArrayList<>();
+        resources.forEach((id, role) -> tokenRoles.addAll(role.getRoles()));
         var service = serviceMapper.getService(request);
         accessService.checkUserAccess(AccessData.builder()
-                .operationId(methodName)
-                .partyId(partyID)
-                .tokenExpirationSec(token.getExp())
-                .tokenId(token.getId())
-                .userId(token.getSubject())
+                .methodName(methodName)
                 .userEmail(token.getEmail())
-                .service(service)
+                .serviceName(service.getName())
+                .tokenRoles(tokenRoles)
                 .build());
-        return wachterClient.send(request, contentData, service);
+        return wachterClient.send(request, contentData, service.getUrl());
     }
 
     @SneakyThrows
