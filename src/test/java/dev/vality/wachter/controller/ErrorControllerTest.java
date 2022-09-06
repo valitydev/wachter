@@ -32,9 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
     @MockBean
-    private HttpResponse httpResponse;
-
-    @MockBean
     private HttpClient httpClient;
 
     @Autowired
