@@ -34,8 +34,13 @@ info:
   stage: dev
 
 wachter:
+  auth:
+    enabled: true
   serviceHeader: Service
   services:
+    claimManagement:
+      name: claimManagement
+      url: http://localhost:8097/v1/cm
     messages:
       name: messages
       url: http://localhost:8097/v1/messages
@@ -45,9 +50,6 @@ wachter:
     repairer:
       name: repairer
       url: http://localhost:8022/v1/repair/withdrawal/session
-    claimManagement:
-      name: claimManagement
-      url: http://localhost:8097/v1/cm
     fistfulAdmin:
       name: fistfulAdmin
       url: http://localhost:8022/v1/admin
@@ -75,17 +77,6 @@ http-client:
   connectTimeout: 10000
   connectionRequestTimeout: 10000
   socketTimeout: 10000
-
-bouncer:
-  url: http://localhost:8022/v1/arbiter
-  networkTimeout: 10000
-  deployment-id: production
-  auth-method: SessionToken
-  realm: external
-  rule-set-id: change_it
-  context-fragment-id: wachter
-  auth:
-    enabled: true
 
 keycloak:
   realm: internal

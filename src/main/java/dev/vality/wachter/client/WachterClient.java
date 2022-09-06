@@ -1,6 +1,5 @@
 package dev.vality.wachter.client;
 
-import dev.vality.wachter.config.properties.WachterProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.http.HttpResponse;
@@ -20,8 +19,8 @@ public class WachterClient {
     private final HttpClient httpclient;
 
     @SneakyThrows
-    public byte[] send(HttpServletRequest request, byte[] contentData, WachterProperties.Service service) {
-        HttpPost httppost = new HttpPost(service.getUrl());
+    public byte[] send(HttpServletRequest request, byte[] contentData, String url) {
+        HttpPost httppost = new HttpPost(url);
         setHeader(request, httppost);
         httppost.setEntity(new ByteArrayEntity(contentData));
         HttpResponse response = httpclient.execute(httppost);
