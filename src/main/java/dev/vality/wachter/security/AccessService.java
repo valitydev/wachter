@@ -16,10 +16,11 @@ public class AccessService {
     private final RoleAccessService roleAccessService;
 
     public void checkUserAccess(AccessData accessData) {
-        log.info("Check the {} rights to perform the operation {} in service {}",
+        log.info("Check the {} rights to perform the operation {} in service {} for roles {}",
                 accessData.getUserEmail(),
                 accessData.getMethodName(),
-                accessData.getServiceName());
+                accessData.getServiceName(),
+                accessData.getTokenRoles());
         if (authEnabled) {
             roleAccessService.checkRolesAccess(accessData);
         } else {
