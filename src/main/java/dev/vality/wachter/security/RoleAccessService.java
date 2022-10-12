@@ -25,11 +25,13 @@ public class RoleAccessService {
                         accessData.getMethodName(),
                         accessData.getUserEmail());
                 return;
+
             } else if (role.equalsIgnoreCase(getServiceName(accessData))) {
                 log.info("Rights allowed in all service {} for user {}",
                         accessData.getServiceName(),
                         accessData.getUserEmail());
                 return;
+
             }
         }
         throw new AuthorizationException(
