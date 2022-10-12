@@ -24,20 +24,19 @@ public class RoleAccessService {
                         accessData.getServiceName(),
                         accessData.getMethodName(),
                         accessData.getUserEmail());
-                break;
+                return;
             } else if (role.equalsIgnoreCase(getServiceName(accessData))) {
                 log.info("Rights allowed in all service {} for user {}",
                         accessData.getServiceName(),
                         accessData.getUserEmail());
-                break;
-            } else {
-                throw new AuthorizationException(
-                        String.format("User %s don't have access to %s in service %s",
-                                accessData.getUserEmail(),
-                                accessData.getMethodName(),
-                                accessData.getServiceName()));
+                return;
             }
         }
+        throw new AuthorizationException(
+                String.format("User %s don't have access to %s in service %s",
+                        accessData.getUserEmail(),
+                        accessData.getMethodName(),
+                        accessData.getServiceName()));
     }
 
     private String getServiceName(AccessData accessData) {
