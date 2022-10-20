@@ -11,11 +11,20 @@ import org.springframework.stereotype.Service;
 public class RoleAccessService {
 
     private static final String ROLE_DELIMITER = ":";
+    private static final String FORBIDDEN_MARK = "!";
 
     public void checkRolesAccess(AccessData accessData) {
         if (accessData.getTokenRoles().isEmpty()) {
             throw new AuthorizationException(
                     String.format("User %s don't have roles", accessData.getUserEmail()));
+        }
+
+        if (isRoleContainsForbiddenServiceAndMethodName(accessData)) {
+            throw new AuthorizationException(
+                    String.format("User %s don't have access to %s in service %s",
+                            accessData.getUserEmail(),
+                            accessData.getMethodName(),
+                            accessData.getServiceName()));
         }
 
         for (String role : accessData.getTokenRoles()) {
@@ -47,6 +56,19 @@ public class RoleAccessService {
 
     private String getServiceAndMethodName(AccessData accessData) {
         return String.join(
+                ROLE_DELIMITER,
+                accessData.getServiceName(),
+                accessData.getMethodName());
+    }
+
+    private boolean isRoleContainsForbiddenServiceAndMethodName(AccessData accessData) {
+        return accessData.getTokenRoles()
+                .stream()
+                .anyMatch(getForbiddenServiceAndMethodName(accessData)::equalsIgnoreCase);
+    }
+
+    private String getForbiddenServiceAndMethodName(AccessData accessData) {
+        return FORBIDDEN_MARK + String.join(
                 ROLE_DELIMITER,
                 accessData.getServiceName(),
                 accessData.getMethodName());
