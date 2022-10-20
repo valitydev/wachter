@@ -120,4 +120,21 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                                 " to methodName in service Invoicing",
                         result.getResolvedException().getMessage()));
     }
+
+    @Test
+    @SneakyThrows
+    void requestWithForbiddenMethod() {
+        mvc.perform(post("/wachter")
+                        .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
+                        .header("X-Request-ID", randomUUID())
+                        .header("Service", "DominantCache")
+                        .header("X-Request-Deadline", Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .content(TMessageUtil.createTMessage(protocolFactory)))
+                .andDo(print())
+                .andExpect(status().is4xxClientError())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof AuthorizationException))
+                .andExpect(result -> assertEquals("User darkside-the-best@mail.com don't have access" +
+                                " to methodName in service DominantCache",
+                        result.getResolvedException().getMessage()));
+    }
 }
