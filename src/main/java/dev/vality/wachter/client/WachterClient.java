@@ -2,6 +2,8 @@ package dev.vality.wachter.client;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WachterClient {
@@ -23,8 +26,11 @@ public class WachterClient {
         HttpPost httppost = new HttpPost(url);
         setHeader(request, httppost);
         httppost.setEntity(new ByteArrayEntity(contentData));
+        log.info("Send request to url {}", url);
         HttpResponse response = httpclient.execute(httppost);
-        return EntityUtils.toByteArray(response.getEntity());
+        HttpEntity httpEntity = response.getEntity();
+        log.info("Get response with entity: {}", httpEntity);
+        return EntityUtils.toByteArray(httpEntity);
     }
 
     private void setHeader(HttpServletRequest request, HttpPost httppost) {
