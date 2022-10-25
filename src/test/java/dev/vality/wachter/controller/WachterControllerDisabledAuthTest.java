@@ -4,8 +4,10 @@ import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
 import dev.vality.wachter.testutil.TMessageUtil;
 import lombok.SneakyThrows;
 import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicStatusLine;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +63,7 @@ class WachterControllerDisabledAuthTest extends AbstractKeycloakOpenIdAsWiremock
     @SneakyThrows
     void requestSuccess() {
         when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
+        when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("", 0, 0), 200, ""));
         when(httpClient.execute(any())).thenReturn(httpResponse);
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithoutRoles())
