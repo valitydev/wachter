@@ -29,7 +29,7 @@ public class WachterClient {
         log.info("Send request to url {}", url);
         HttpResponse response = httpclient.execute(httppost);
         HttpEntity httpEntity = response.getEntity();
-        log.info("Get response with entity: {}", httpEntity);
+        log.info("Get response with entity: {} and statusLine {}", httpEntity, response.getStatusLine());
         return EntityUtils.toByteArray(httpEntity);
     }
 
