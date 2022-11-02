@@ -9,10 +9,12 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.util.EntityUtils;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
 @Slf4j
+@Component
 public class WachterResponseHandler implements ResponseHandler<byte[]> {
 
     @Override
