@@ -1,5 +1,6 @@
 package dev.vality.wachter.controller;
 
+import dev.vality.wachter.client.WachterResponseHandler;
 import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
 import dev.vality.wachter.testutil.TMessageUtil;
 import lombok.SneakyThrows;
@@ -37,6 +38,9 @@ class WachterControllerDisabledAuthTest extends AbstractKeycloakOpenIdAsWiremock
     private HttpResponse httpResponse;
 
     @Autowired
+    private WachterResponseHandler responseHandler;
+
+    @Autowired
     private MockMvc mvc;
 
     @Autowired
@@ -64,7 +68,7 @@ class WachterControllerDisabledAuthTest extends AbstractKeycloakOpenIdAsWiremock
     void requestSuccess() {
         when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
         when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("", 0, 0), 200, ""));
-        when(httpClient.execute(any())).thenReturn(httpResponse);
+        when(httpClient.execute(any(), eq(responseHandler))).thenReturn(new byte[0]);
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithoutRoles())
                         .header("Service", "messages")
@@ -73,7 +77,7 @@ class WachterControllerDisabledAuthTest extends AbstractKeycloakOpenIdAsWiremock
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
-        verify(httpClient, times(1)).execute(any());
+        verify(httpClient, times(1)).execute(any(), eq(responseHandler));
     }
 
 }
