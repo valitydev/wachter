@@ -86,6 +86,8 @@ http-client:
   connectTimeout: 10000
   connectionRequestTimeout: 10000
   socketTimeout: 10000
+  maxTotalPooling: 200
+  defaultMaxPerRoute: 200
 
 keycloak:
   realm: internal
