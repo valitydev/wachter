@@ -26,9 +26,7 @@ public class WachterClient {
         setHeader(request, httppost);
         httppost.setEntity(new ByteArrayEntity(contentData));
         log.info("Send request to url {}", url);
-        var response = httpclient.execute(httppost, responseHandler);
-        log.info("Get response {}", response);
-        return response;
+        return httpclient.execute(httppost, responseHandler);
     }
 
     private void setHeader(HttpServletRequest request, HttpPost httppost) {

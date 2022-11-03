@@ -17,6 +17,7 @@ public class WachterResponseHandler implements ResponseHandler<byte[]> {
 
     @Override
     public byte[] handleResponse(HttpResponse httpResponse) throws IOException {
+        log.info("Get response {}", httpResponse);
         int statusCode = httpResponse.getStatusLine().getStatusCode();
         HttpStatus httpStatus = HttpStatus.valueOf(statusCode);
         if (httpStatus.is2xxSuccessful()) {
