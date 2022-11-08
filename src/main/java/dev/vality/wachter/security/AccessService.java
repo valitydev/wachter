@@ -16,18 +16,21 @@ public class AccessService {
     private final RoleAccessService roleAccessService;
 
     public void checkUserAccess(AccessData accessData) {
-        log.info("Check the {} rights to perform the operation {} in service {} for roles {}",
+        log.info("Check the {} rights to perform the operation {} in service {} for roles {} with trace_id {}",
                 accessData.getUserEmail(),
                 accessData.getMethodName(),
                 accessData.getServiceName(),
-                accessData.getTokenRoles());
+                accessData.getTokenRoles(),
+                accessData.getTraceId());
         if (authEnabled) {
             roleAccessService.checkRolesAccess(accessData);
         } else {
-            log.warn("Authorization disabled. Access check was not performed for user {} to method {} in service {}",
+            log.warn("Authorization disabled. Access check was not performed for user {} " +
+                            "to method {} in service {} with trace_id {}",
                     accessData.getUserEmail(),
                     accessData.getMethodName(),
-                    accessData.getServiceName());
+                    accessData.getServiceName(),
+                    accessData.getTraceId());
         }
     }
 

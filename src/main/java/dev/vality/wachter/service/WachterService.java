@@ -14,6 +14,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID;
+
 @RequiredArgsConstructor
 @Service
 public class WachterService {
@@ -38,6 +40,7 @@ public class WachterService {
                 .userEmail(token.getEmail())
                 .serviceName(service.getName())
                 .tokenRoles(tokenRoles)
+                .traceId(request.getHeader(WOODY_TRACE_ID))
                 .build());
         return wachterClient.send(request, contentData, service.getUrl());
     }
