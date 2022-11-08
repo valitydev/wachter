@@ -69,7 +69,8 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .andDo(print())
                 .andExpect(status().is4xxClientError())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof AuthorizationException))
-                .andExpect(result -> assertEquals("User darkside-the-best@mail.com don't have roles",
+                .andExpect(result -> assertEquals("User darkside-the-best@mail.com don't " +
+                                "have roles with trace_id null",
                         result.getResolvedException().getMessage()));
     }
 
@@ -134,7 +135,7 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .andExpect(status().is4xxClientError())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof AuthorizationException))
                 .andExpect(result -> assertEquals("User darkside-the-best@mail.com don't have access" +
-                                " to methodName in service DominantCache",
+                                " to methodName in service DominantCache with trace_id null",
                         result.getResolvedException().getMessage()));
     }
 }

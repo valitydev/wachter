@@ -16,23 +16,26 @@ public class RoleAccessService {
     public void checkRolesAccess(AccessData accessData) {
         if (accessData.getTokenRoles().isEmpty()) {
             throw new AuthorizationException(
-                    String.format("User %s don't have roles", accessData.getUserEmail()));
+                    String.format("User %s don't have roles with trace_id %s",
+                            accessData.getUserEmail(), accessData.getTraceId()));
         }
 
         if (isRoleContainsForbiddenServiceAndMethodName(accessData)) {
             throw new AuthorizationException(
-                    String.format("User %s don't have access to %s in service %s",
+                    String.format("User %s don't have access to %s in service %s with trace_id %s",
                             accessData.getUserEmail(),
                             accessData.getMethodName(),
-                            accessData.getServiceName()));
+                            accessData.getServiceName(),
+                            accessData.getTraceId()));
         }
 
         for (String role : accessData.getTokenRoles()) {
             if (role.equalsIgnoreCase(getServiceAndMethodName(accessData))) {
-                log.info("Rights allowed in service {} and method {} for user {}",
+                log.info("Rights allowed in service {} and method {} for user {} with trace_id {}",
                         accessData.getServiceName(),
                         accessData.getMethodName(),
-                        accessData.getUserEmail());
+                        accessData.getUserEmail(),
+                        accessData.getTraceId());
                 return;
 
             } else if (role.equalsIgnoreCase(getServiceName(accessData))) {

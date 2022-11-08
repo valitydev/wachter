@@ -45,6 +45,7 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/**/health/liveness").permitAll()
                 .antMatchers(HttpMethod.GET, "/**/health/readiness").permitAll()
+                .antMatchers(HttpMethod.GET, "/**/actuator/prometheus").permitAll()
                 .anyRequest().authenticated();
     }
 
