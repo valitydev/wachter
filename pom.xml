@@ -90,7 +90,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-spring-security-adapter</artifactId>
-            <version>18.0.0</version>
+            <version>20.0.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.bouncycastle</groupId>
