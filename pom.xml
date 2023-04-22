@@ -48,7 +48,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>damsel</artifactId>
-            <version>1.566-03bbf48</version>
+            <version>1.594-e12c03c</version>
         </dependency>
 
         <!--spring-->
