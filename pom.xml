@@ -7,7 +7,7 @@
     <parent>
         <groupId>dev.vality</groupId>
         <artifactId>service-parent-pom</artifactId>
-        <version>1.0.17</version>
+        <version>1.0.20</version>
     </parent>
 
     <artifactId>wachter</artifactId>
@@ -39,7 +39,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>bouncer-proto</artifactId>
-            <version>1.43-2c07755</version>
+            <version>1.51-23d1761</version>
         </dependency>
         <dependency>
             <groupId>dev.vality.geck</groupId>
@@ -48,7 +48,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>damsel</artifactId>
-            <version>1.597-bfedcb9</version>
+            <version>1.606-f718741</version>
         </dependency>
 
         <!--spring-->
@@ -67,7 +67,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-admin-client</artifactId>
-            <version>18.0.0</version>
+            <version>18.0.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.jboss.resteasy</groupId>
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-spring-security-adapter</artifactId>
-            <version>18.0.0</version>
+            <version>18.0.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.bouncycastle</groupId>
@@ -152,7 +152,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.69</version>
+            <version>1.70</version>
         </dependency>
 
         <!--test-->
@@ -164,7 +164,7 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>
-            <version>0.9.1</version>
+            <version>0.12.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -176,7 +176,7 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-contract-wiremock</artifactId>
-            <version>3.1.1</version>
+            <version>3.1.8</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -211,7 +211,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-remote-resources-plugin</artifactId>
-                <version>1.6.0</version>
+                <version>1.7.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.shared</groupId>
