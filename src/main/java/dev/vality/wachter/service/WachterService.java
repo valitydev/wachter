@@ -13,8 +13,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID;
+import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID_DEPRECATED;
+import static dev.vality.wachter.constants.HeadersConstants.X_WOODY_TRACE_ID;
 
 @RequiredArgsConstructor
 @Service
@@ -40,7 +42,7 @@ public class WachterService {
                 .userEmail(token.getEmail())
                 .serviceName(service.getName())
                 .tokenRoles(tokenRoles)
-                .traceId(request.getHeader(WOODY_TRACE_ID))
+                .traceId(getTraceId(request))
                 .build());
         return wachterClient.send(request, contentData, service.getUrl());
     }
@@ -50,5 +52,10 @@ public class WachterService {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         IOUtils.copy(request.getInputStream(), baos);
         return baos.toByteArray();
+    }
+
+    private String getTraceId(HttpServletRequest request) {
+        return Optional.ofNullable(request.getHeader(X_WOODY_TRACE_ID))
+                .orElse(request.getHeader(WOODY_TRACE_ID_DEPRECATED));
     }
 }

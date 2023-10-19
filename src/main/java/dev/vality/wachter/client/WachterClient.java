@@ -9,9 +9,12 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID;
+import static dev.vality.wachter.constants.HeadersConstants.*;
 
 @Slf4j
 @Service
@@ -26,17 +29,40 @@ public class WachterClient {
         HttpPost httppost = new HttpPost(url);
         setHeader(request, httppost);
         httppost.setEntity(new ByteArrayEntity(contentData));
-        log.info("Send request to url {} with trace_id: {}", url, request.getHeader(WOODY_TRACE_ID));
+        log.info("Send request to url {} with trace_id: {}", url, getTraceId(request));
         return httpclient.execute(httppost, responseHandler);
     }
 
     private void setHeader(HttpServletRequest request, HttpPost httppost) {
-        Enumeration<String> headerNames = request.getHeaderNames();
+        var headerNames = request.getHeaderNames();
+        var headers = new HashMap<String, String>();
         if (headerNames != null) {
             while (headerNames.hasMoreElements()) {
                 String next = headerNames.nextElement();
-                httppost.setHeader(next, request.getHeader(next));
+                headers.put(next, request.getHeader(next));
             }
         }
+        var woodyUserIdentityDeprecatedHeaders = headers.entrySet().stream()
+                .filter(s -> s.getKey().startsWith(X_WOODY_META_USER_IDENTITY_PREFIX))
+                .map(s -> Map.entry(
+                        s.getKey().replaceAll(
+                                X_WOODY_META_USER_IDENTITY_PREFIX,
+                                WOODY_META_USER_IDENTITY_DEPRECATED_PREFIX),
+                        s.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
+        var woodyDeprecatedHeaders = headers.entrySet().stream()
+                .filter(s -> s.getKey().startsWith(X_WOODY_PREFIX))
+                .map(s -> Map.entry(s.getKey().replaceAll(X_WOODY_PREFIX, WOODY_DEPRECATED_PREFIX), s.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
+        headers.putAll(woodyUserIdentityDeprecatedHeaders);
+        headers.putAll(woodyDeprecatedHeaders);
+        for (var entry : headers.entrySet()) {
+            httppost.setHeader(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private String getTraceId(HttpServletRequest request) {
+        return Optional.ofNullable(request.getHeader(X_WOODY_TRACE_ID))
+                .orElse(request.getHeader(WOODY_TRACE_ID_DEPRECATED));
     }
 }
