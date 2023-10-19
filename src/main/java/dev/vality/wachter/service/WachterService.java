@@ -15,8 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID;
 import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID_DEPRECATED;
+import static dev.vality.wachter.constants.HeadersConstants.X_WOODY_TRACE_ID;
 
 @RequiredArgsConstructor
 @Service
@@ -55,7 +55,7 @@ public class WachterService {
     }
 
     private String getTraceId(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader(WOODY_TRACE_ID))
+        return Optional.ofNullable(request.getHeader(X_WOODY_TRACE_ID))
                 .orElse(request.getHeader(WOODY_TRACE_ID_DEPRECATED));
     }
 }

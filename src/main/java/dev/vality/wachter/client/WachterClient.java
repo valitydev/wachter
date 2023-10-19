@@ -14,8 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID;
-import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID_DEPRECATED;
+import static dev.vality.wachter.constants.HeadersConstants.*;
 
 @Slf4j
 @Service
@@ -43,10 +42,19 @@ public class WachterClient {
                 headers.put(next, request.getHeader(next));
             }
         }
-        var woodyDeprecatedHeaders = headers.entrySet().stream()
-                .filter(s -> s.getKey().startsWith("woody-"))
-                .map(s -> Map.entry(s.getKey().replaceAll("woody-", "woody."), s.getValue()))
+        var woodyUserIdentityDeprecatedHeaders = headers.entrySet().stream()
+                .filter(s -> s.getKey().startsWith(X_WOODY_META_USER_IDENTITY_PREFIX))
+                .map(s -> Map.entry(
+                        s.getKey().replaceAll(
+                                X_WOODY_META_USER_IDENTITY_PREFIX,
+                                WOODY_META_USER_IDENTITY_DEPRECATED_PREFIX),
+                        s.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
+        var woodyDeprecatedHeaders = headers.entrySet().stream()
+                .filter(s -> s.getKey().startsWith(X_WOODY_PREFIX))
+                .map(s -> Map.entry(s.getKey().replaceAll(X_WOODY_PREFIX, WOODY_DEPRECATED_PREFIX), s.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
+        headers.putAll(woodyUserIdentityDeprecatedHeaders);
         headers.putAll(woodyDeprecatedHeaders);
         for (var entry : headers.entrySet()) {
             httppost.setHeader(entry.getKey(), entry.getValue());
@@ -54,7 +62,7 @@ public class WachterClient {
     }
 
     private String getTraceId(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader(WOODY_TRACE_ID))
+        return Optional.ofNullable(request.getHeader(X_WOODY_TRACE_ID))
                 .orElse(request.getHeader(WOODY_TRACE_ID_DEPRECATED));
     }
 }

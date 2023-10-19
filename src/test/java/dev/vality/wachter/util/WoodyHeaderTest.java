@@ -6,17 +6,21 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static dev.vality.wachter.constants.HeadersConstants.WOODY_DEPRECATED_PREFIX;
+import static dev.vality.wachter.constants.HeadersConstants.X_WOODY_PREFIX;
+
 public class WoodyHeaderTest {
 
     @Test
-    public void name() {
-        var headers = Set.of("kekw", "", "woody-parent-id", "woody-trace-id", "woody-span-id", "woody-deadline");
-        var collect = headers.stream()
-                .filter(s -> s.startsWith("woody-"))
-                .map(s -> s.replaceAll("woody-", "woody."))
+    public void nawoodyDeprecatedHeadersTest() {
+        var headers = Set.of(
+                "kekw", "", "x-woody-parent-id", "x-woody-trace-id", "x-woody-span-id", "x-woody-deadline");
+        var woodyDeprecatedHeaders = headers.stream()
+                .filter(s -> s.startsWith(X_WOODY_PREFIX))
+                .map(s -> s.replaceAll(X_WOODY_PREFIX, WOODY_DEPRECATED_PREFIX))
                 .collect(Collectors.toSet());
         Assertions.assertEquals(
                 Set.of("woody.trace-id", "woody.parent-id", "woody.span-id", "woody.deadline"),
-                collect);
+                woodyDeprecatedHeaders);
     }
 }
