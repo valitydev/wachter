@@ -95,4 +95,45 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         verify(httpClient, times(1)).execute(any(), eq(responseHandler));
     }
 
+    @Test
+    @SneakyThrows
+    void requestSuccessWithWoodyHeaders() {
+        when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
+        when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("", 0, 0), 200, ""));
+        when(httpClient.execute(any(), eq(responseHandler))).thenReturn(new byte[0]);
+        mvc.perform(post("/wachter")
+                        .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
+                        .header("Service", "Domain")
+                        .header("X-Request-ID", randomUUID())
+                        .header("X-Request-Deadline", Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .header("woody.parent-id", "parent")
+                        .header("woody.trace-id", "trace")
+                        .header("woody.span-id", "span")
+                        .header("woody.deadline", "deadline")
+                        .content(TMessageUtil.createTMessage(protocolFactory)))
+                .andDo(print())
+                .andExpect(status().is2xxSuccessful());
+        verify(httpClient, times(1)).execute(any(), eq(responseHandler));
+    }
+
+    @Test
+    @SneakyThrows
+    void requestSuccessWithWoodyWithDashHeaders() {
+        when(httpResponse.getEntity()).thenReturn(new StringEntity(""));
+        when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("", 0, 0), 200, ""));
+        when(httpClient.execute(any(), eq(responseHandler))).thenReturn(new byte[0]);
+        mvc.perform(post("/wachter")
+                        .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
+                        .header("Service", "Domain")
+                        .header("X-Request-ID", randomUUID())
+                        .header("X-Request-Deadline", Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .header("woody-parent-id", "parent")
+                        .header("woody-trace-id", "trace")
+                        .header("woody-span-id", "span")
+                        .header("woody-deadline", "deadline")
+                        .content(TMessageUtil.createTMessage(protocolFactory)))
+                .andDo(print())
+                .andExpect(status().is2xxSuccessful());
+        verify(httpClient, times(1)).execute(any(), eq(responseHandler));
+    }
 }
