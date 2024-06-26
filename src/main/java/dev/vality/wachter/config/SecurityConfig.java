@@ -1,57 +1,54 @@
 package dev.vality.wachter.config;
 
 import org.keycloak.adapters.springsecurity.KeycloakSecurityComponents;
-import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
+
 @Configuration
-@EnableWebSecurity
 @ComponentScan(
         basePackageClasses = KeycloakSecurityComponents.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.REGEX,
                 pattern = "org.keycloak.adapters.springsecurity.management.HttpSessionManager"))
-@EnableGlobalMethodSecurity(prePostEnabled = true, proxyTargetClass = true)
+@EnableMethodSecurity(proxyTargetClass = true)
 @ConditionalOnProperty(value = "auth.enabled", havingValue = "true")
-public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
     @Bean
-    @Override
     protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
         return new NullAuthenticatedSessionStrategy();
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        super.configure(http);
-        http.cors().and()
-                .csrf().disable()
-                .authorizeRequests()
-                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .antMatchers(HttpMethod.GET, "/**/health/liveness").permitAll()
-                .antMatchers(HttpMethod.GET, "/**/health/readiness").permitAll()
-                .antMatchers(HttpMethod.GET, "/**/actuator/prometheus").permitAll()
-                .anyRequest().authenticated();
-    }
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/**/health/liveness").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/**/health/readiness").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/**/actuator/prometheus").permitAll()
+                        .anyRequest().authenticated())
+                .oauth2Login(withDefaults())
+                .oauth2Client(withDefaults())
+                .oauth2ResourceServer(withDefaults());
 
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) {
-        auth.authenticationProvider(keycloakAuthenticationProvider());
+        return http.build();
     }
 
     @Bean
