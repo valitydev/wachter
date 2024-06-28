@@ -17,9 +17,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
-
 @Configuration
 @ComponentScan(
         basePackageClasses = KeycloakSecurityComponents.class,
@@ -43,10 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/**/health/liveness").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**/health/readiness").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**/actuator/prometheus").permitAll()
-                        .anyRequest().authenticated())
-                .oauth2Login(withDefaults())
-                .oauth2Client(withDefaults())
-                .oauth2ResourceServer(withDefaults());
+                        .anyRequest().authenticated());
 
         return http.build();
     }
