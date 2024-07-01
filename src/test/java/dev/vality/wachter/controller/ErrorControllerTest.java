@@ -5,7 +5,6 @@ import dev.vality.wachter.exeptions.AuthorizationException;
 import dev.vality.wachter.exeptions.WachterException;
 import dev.vality.wachter.testutil.TMessageUtil;
 import lombok.SneakyThrows;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.junit.jupiter.api.AfterEach;
