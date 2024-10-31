@@ -49,7 +49,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>damsel</artifactId>
-            <version>1.639-4856124</version>
+            <version>1.649-7ed2112</version>
         </dependency>
 
         <!--spring-->
