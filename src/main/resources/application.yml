@@ -1,10 +1,10 @@
 server:
-  port: '@server.port@'
+  port: '${server.port}'
 management:
   security:
     flag: false
   server:
-    port: '@management.port@'
+    port: '${management.port}'
   metrics:
     tags:
       application: '@project.name@'
