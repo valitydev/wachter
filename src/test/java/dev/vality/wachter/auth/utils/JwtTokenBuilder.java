@@ -2,12 +2,25 @@ package dev.vality.wachter.auth.utils;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import lombok.SneakyThrows;
+import org.bouncycastle.jcajce.provider.asymmetric.X509;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemObjectGenerator;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.StringWriter;
+import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.UUID;
 
 public class JwtTokenBuilder {
@@ -24,15 +37,18 @@ public class JwtTokenBuilder {
 
     private final PrivateKey privateKey;
 
-    public JwtTokenBuilder(PrivateKey privateKey) {
-        this(UUID.randomUUID().toString(), DEFAULT_USERNAME, DEFAULT_EMAIL, privateKey);
+    private final PublicKey publicKey;
+
+    public JwtTokenBuilder(KeyPair keyPair) {
+        this(UUID.randomUUID().toString(), DEFAULT_USERNAME, DEFAULT_EMAIL, keyPair.getPrivate(), keyPair.getPublic());
     }
 
-    public JwtTokenBuilder(String userId, String username, String email, PrivateKey privateKey) {
+    public JwtTokenBuilder(String userId, String username, String email, PrivateKey privateKey, PublicKey publicKey) {
         this.userId = userId;
         this.username = username;
         this.email = email;
         this.privateKey = privateKey;
+        this.publicKey = publicKey;
     }
 
     public String generateJwtWithRoles(String issuer, String... roles) {
@@ -47,7 +63,7 @@ public class JwtTokenBuilder {
             payload = new JSONObject()
                     .put("jti", UUID.randomUUID().toString())
                     .put("exp", exp)
-                    .put("nbf", "0")
+                    .put("nbf", 0L)
                     .put("iat", iat)
                     .put("iss", issuer)
                     .put("aud", "private-api")
@@ -63,11 +79,27 @@ public class JwtTokenBuilder {
             throw new RuntimeException(e);
         }
 
-        String jwt = Jwts.builder()
-                .setPayload(payload)
-                .signWith(SignatureAlgorithm.RS256, privateKey)
+        return Jwts.builder()
+                .content(payload)
+                .signWith(privateKey, Jwts.SIG.RS256)
                 .compact();
-        return jwt;
+    }
+
+    @SneakyThrows
+    public String getPublicKeyAsString() {
+        KeyFactory fact = KeyFactory.getInstance("RSA");
+        X509EncodedKeySpec spec = fact.getKeySpec(publicKey, X509EncodedKeySpec.class);
+        return Base64.getEncoder().encodeToString(spec.getEncoded());
+    }
+
+    @SneakyThrows
+    public PublicKey getPublicKey() {
+        return this.publicKey;
+    }
+
+    @SneakyThrows
+    public PrivateKey getPrivateKey() {
+        return this.privateKey;
     }
 
 }

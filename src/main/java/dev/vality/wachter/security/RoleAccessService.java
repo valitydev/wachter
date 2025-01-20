@@ -19,7 +19,6 @@ public class RoleAccessService {
                     String.format("User %s don't have roles with trace_id %s",
                             accessData.getUserEmail(), accessData.getTraceId()));
         }
-
         if (isRoleContainsForbiddenServiceAndMethodName(accessData)) {
             throw new AuthorizationException(
                     String.format("User %s don't have access to %s in service %s with trace_id %s",

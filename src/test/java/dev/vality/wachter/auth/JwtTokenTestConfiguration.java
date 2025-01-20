@@ -1,6 +1,7 @@
 package dev.vality.wachter.auth;
 
 import dev.vality.wachter.auth.utils.JwtTokenBuilder;
+import dev.vality.wachter.auth.utils.KeycloakOpenIdStub;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
@@ -17,23 +18,8 @@ import java.util.Properties;
 public class JwtTokenTestConfiguration {
 
     @Bean
-    public static PropertySourcesPlaceholderConfigurer properties(KeyPair keyPair)
-            throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
-        KeyFactory fact = KeyFactory.getInstance("RSA");
-        X509EncodedKeySpec spec = fact.getKeySpec(keyPair.getPublic(), X509EncodedKeySpec.class);
-        String publicKey = Base64.getEncoder().encodeToString(spec.getEncoded());
-        PropertySourcesPlaceholderConfigurer pspc = new PropertySourcesPlaceholderConfigurer();
-        Properties properties = new Properties();
-        properties.load(new ClassPathResource("application.yml").getInputStream());
-        properties.setProperty("keycloak.realm-public-key", publicKey);
-        pspc.setProperties(properties);
-        pspc.setLocalOverride(true);
-        return pspc;
-    }
-
-    @Bean
     public JwtTokenBuilder jwtTokenBuilder(KeyPair keyPair) {
-        return new JwtTokenBuilder(keyPair.getPrivate());
+        return new JwtTokenBuilder(keyPair);
     }
 
     @Bean

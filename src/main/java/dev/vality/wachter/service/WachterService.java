@@ -7,12 +7,15 @@ import dev.vality.wachter.security.AccessService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID_DEPRECATED;
@@ -22,7 +25,6 @@ import static dev.vality.wachter.constants.HeadersConstants.X_WOODY_TRACE_ID;
 @Service
 public class WachterService {
 
-    private final KeycloakService keycloakService;
     private final AccessService accessService;
     private final WachterClient wachterClient;
     private final ServiceMapper serviceMapper;
@@ -32,16 +34,14 @@ public class WachterService {
     public byte[] process(HttpServletRequest request) {
         byte[] contentData = getContentData(request);
         var methodName = methodNameReaderService.getMethodName(contentData);
-        var token = keycloakService.getAccessToken();
-        var resources = token.getResourceAccess();
-        List<String> tokenRoles = new ArrayList<>();
-        resources.forEach((id, role) -> tokenRoles.addAll(role.getRoles()));
+        var token = (JwtAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
         var service = serviceMapper.getService(request);
         accessService.checkUserAccess(AccessData.builder()
                 .methodName(methodName)
-                .userEmail(token.getEmail())
+                .userEmail(((Jwt)token.getPrincipal()).getClaim("email"))
                 .serviceName(service.getName())
-                .tokenRoles(tokenRoles)
+                .tokenRoles(token.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority).toList())
                 .traceId(getTraceId(request))
                 .build());
         return wachterClient.send(request, contentData, service.getUrl());

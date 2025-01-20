@@ -1,10 +1,10 @@
 server:
-  port: '@server.port@'
+  port: ${server.port}
 management:
   security:
     flag: false
   server:
-    port: '@management.port@'
+    port: ${management.port}
   metrics:
     tags:
       application: '@project.name@'
@@ -30,6 +30,13 @@ spring:
   output:
     ansi:
       enabled: always
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          realm: internal
+          issuer-uri: https://auth.domain/auth/realms/${spring.security.oauth2.resourceserver.jwt.realm}
+          resource-id: koffing
 info:
   version: '@project.version@'
   stage: dev
@@ -89,13 +96,5 @@ http-client:
   socketTimeout: 10000
   maxTotalPooling: 200
   defaultMaxPerRoute: 200
-
-keycloak:
-  realm: internal
-  auth-server-url: http://keycloak:8080/auth/
-  resource: koffing
-  not-before: 0
-  ssl-required: none
-  realm-public-key:
 
 auth.enabled: true
