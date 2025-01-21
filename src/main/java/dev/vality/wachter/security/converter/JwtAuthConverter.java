@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -53,15 +52,10 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         if (resourceAccess.isEmpty()) {
             return Set.of();
         }
-        if (resourceAccess.get(resourceId) == null) {
-            return Set.of();
-        }
-        Map<String, Object> resource = (Map<String, Object>) resourceAccess.get(resourceId);
 
-        Collection<String> resourceRoles = (Collection<String>) resource.get("roles");
-
-        return resourceRoles
-                .stream()
+        return resourceAccess.values().stream()
+                .map(resourceAccessInfo -> (Map<String, Object>) resourceAccessInfo)
+                .flatMap(resourceAccessInfo -> ((Collection<String>) resourceAccessInfo.get("roles")).stream())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toSet());
     }

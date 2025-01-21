@@ -12,9 +12,10 @@ public class KeycloakOpenIdTestConfiguration {
 
     @Bean
     @SneakyThrows
-    public KeycloakOpenIdStub keycloakOpenIdStub(@Value("${wiremock.server.baseUrl}/auth") String keycloakAuthServerUrl,
-                                                 @Value("${spring.security.oauth2.resourceserver.jwt.realm}") String keycloakRealm,
-                                                 JwtTokenBuilder jwtTokenBuilder) {
-        return new KeycloakOpenIdStub(keycloakAuthServerUrl, keycloakRealm, jwtTokenBuilder);
+    public KeycloakOpenIdStub keycloakOpenIdStub(
+            @Value("${spring.security.oauth2.resourceserver.url}") String keycloakAuthServerUrl,
+            @Value("${spring.security.oauth2.resourceserver.jwt.realm}") String keycloakRealm,
+            JwtTokenBuilder jwtTokenBuilder) {
+        return new KeycloakOpenIdStub(keycloakAuthServerUrl + "/auth", keycloakRealm, jwtTokenBuilder);
     }
 }

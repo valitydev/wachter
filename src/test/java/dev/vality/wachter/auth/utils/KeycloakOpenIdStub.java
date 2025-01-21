@@ -17,7 +17,8 @@ public class KeycloakOpenIdStub {
     private final String jwkConfig;
     private final JwtTokenBuilder jwtTokenBuilder;
 
-    public KeycloakOpenIdStub(String keycloakAuthServerUrl, String keycloakRealm, JwtTokenBuilder jwtTokenBuilder) throws Exception {
+    public KeycloakOpenIdStub(String keycloakAuthServerUrl, String keycloakRealm, JwtTokenBuilder jwtTokenBuilder)
+            throws Exception {
         this.keycloakRealm = keycloakRealm;
         this.jwtTokenBuilder = jwtTokenBuilder;
         this.issuer = keycloakAuthServerUrl + "/realms/" + keycloakRealm;
@@ -63,7 +64,8 @@ public class KeycloakOpenIdStub {
                 """.formatted(
                 PublicKeyUtil.getExponent(jwtTokenBuilder.getPublicKey()),
                         PublicKeyUtil.getModulus(jwtTokenBuilder.getPublicKey()),
-                Base64.getEncoder().encodeToString(GenerateSelfSigned.getCert(new KeyPair(jwtTokenBuilder.getPublicKey(),
+                Base64.getEncoder().encodeToString(
+                        GenerateSelfSigned.generateCertificate(new KeyPair(jwtTokenBuilder.getPublicKey(),
                         jwtTokenBuilder.getPrivateKey())).getEncoded()));
     }
 
@@ -83,8 +85,7 @@ public class KeycloakOpenIdStub {
     }
 
     public String generateJwt(String... roles) {
-        String jwt = jwtTokenBuilder.generateJwtWithRoles(issuer, roles);
-        return jwt;
+        return jwtTokenBuilder.generateJwtWithRoles(issuer, roles);
     }
 
 }

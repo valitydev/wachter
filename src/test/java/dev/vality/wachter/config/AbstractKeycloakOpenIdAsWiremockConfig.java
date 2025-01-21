@@ -10,14 +10,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+@SuppressWarnings("LineLength")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = {WachterApplication.class},
         properties = {
                 "wiremock.server.baseUrl=http://localhost:${wiremock.server.port}",
-                "spring.security.oauth2.resourceserver.jwt.issuer-uri=${wiremock.server.baseUrl}/auth/realms/" +
+                "spring.security.oauth2.resourceserver.url=http://localhost:${wiremock.server.port}",
+                "spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:${wiremock.server.port}/auth/realms/" +
                         "${spring.security.oauth2.resourceserver.jwt.realm}"})
 @AutoConfigureMockMvc
 @AutoConfigureWireMock(port = 0)
@@ -39,8 +42,6 @@ public abstract class AbstractKeycloakOpenIdAsWiremockConfig {
     }
 
     protected String generateSimpleJwtWithoutRoles() {
-        var token = keycloakOpenIdStub.generateJwt();
-        System.out.println(token);
-        return token;
+        return keycloakOpenIdStub.generateJwt();
     }
 }
