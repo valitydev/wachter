@@ -1,11 +1,10 @@
 package dev.vality.wachter.mapper;
 
 import dev.vality.wachter.config.properties.WachterProperties;
-import dev.vality.wachter.exeptions.WachterException;
+import dev.vality.wachter.exceptions.WachterException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 @RequiredArgsConstructor

@@ -6,27 +6,22 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensi
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimNames;
-import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
-import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -46,7 +41,7 @@ public class WebConfig {
             @Override
             protected void doFilterInternal(HttpServletRequest request,
                                             HttpServletResponse response,
-                                            FilterChain filterChain) throws ServletException, IOException {
+                                            FilterChain filterChain) {
                 woodyFlow.createServiceFork(
                                 () -> {
                                     try {

@@ -1,18 +1,12 @@
 package dev.vality.wachter.auth;
 
 import dev.vality.wachter.auth.utils.JwtTokenBuilder;
-import dev.vality.wachter.auth.utils.KeycloakOpenIdStub;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.core.io.ClassPathResource;
 
-import java.io.IOException;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.Properties;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 
 @Configuration
 public class JwtTokenTestConfiguration {

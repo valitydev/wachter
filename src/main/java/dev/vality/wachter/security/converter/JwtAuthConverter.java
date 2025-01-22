@@ -21,11 +21,12 @@ import java.util.stream.Stream;
 @Component
 public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
-    @Value("${spring.security.oauth2.resourceserver.jwt.resource-id}")
-    private String resourceId;
     private static final String principleAttribute = "preferred_username";
+    private static final String resourceAttribute = "resource_access";
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter =
             new JwtGrantedAuthoritiesConverter();
+    @Value("${spring.security.oauth2.resourceserver.jwt.resource-id}")
+    private String resourceId;
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
@@ -40,15 +41,11 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         );
     }
 
-    private String getPrincipleClaimName(Jwt jwt) {
-        return jwt.getClaim(principleAttribute);
-    }
-
     private Collection<? extends GrantedAuthority> extractResourceRoles(Jwt token) {
-        if (token.getClaim("resource_access") == null) {
+        if (token.getClaim(resourceAttribute) == null) {
             return Set.of();
         }
-        Map<String, Object> resourceAccess = token.getClaim("resource_access");
+        Map<String, Object> resourceAccess = token.getClaim(resourceAttribute);
         if (resourceAccess.isEmpty()) {
             return Set.of();
         }
@@ -58,5 +55,9 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
                 .flatMap(resourceAccessInfo -> ((Collection<String>) resourceAccessInfo.get("roles")).stream())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toSet());
+    }
+
+    private String getPrincipleClaimName(Jwt jwt) {
+        return jwt.getClaim(principleAttribute);
     }
 }

@@ -2,7 +2,6 @@ package dev.vality.wachter.auth.utils;
 
 import dev.vality.wachter.testutil.GenerateSelfSigned;
 import dev.vality.wachter.testutil.PublicKeyUtil;
-import io.jsonwebtoken.Jwts;
 
 import java.security.KeyPair;
 import java.util.Base64;

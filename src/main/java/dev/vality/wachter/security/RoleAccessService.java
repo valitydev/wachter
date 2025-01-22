@@ -1,6 +1,6 @@
 package dev.vality.wachter.security;
 
-import dev.vality.wachter.exeptions.AuthorizationException;
+import dev.vality.wachter.exceptions.AuthorizationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

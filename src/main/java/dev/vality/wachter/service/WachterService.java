@@ -4,6 +4,7 @@ import dev.vality.wachter.client.WachterClient;
 import dev.vality.wachter.mapper.ServiceMapper;
 import dev.vality.wachter.security.AccessData;
 import dev.vality.wachter.security.AccessService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -13,9 +14,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
-import java.util.Map;
 import java.util.Optional;
 
 import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID_DEPRECATED;

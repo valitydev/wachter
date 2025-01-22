@@ -1,7 +1,7 @@
 package dev.vality.wachter.controller;
 
-import dev.vality.wachter.exeptions.AuthorizationException;
-import dev.vality.wachter.exeptions.WachterException;
+import dev.vality.wachter.exceptions.AuthorizationException;
+import dev.vality.wachter.exceptions.WachterException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

@@ -6,13 +6,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.UUID;
 
 public class JwtTokenBuilder {
@@ -75,13 +72,6 @@ public class JwtTokenBuilder {
                 .content(payload)
                 .signWith(privateKey, Jwts.SIG.RS256)
                 .compact();
-    }
-
-    @SneakyThrows
-    public String getPublicKeyAsString() {
-        KeyFactory fact = KeyFactory.getInstance("RSA");
-        X509EncodedKeySpec spec = fact.getKeySpec(publicKey, X509EncodedKeySpec.class);
-        return Base64.getEncoder().encodeToString(spec.getEncoded());
     }
 
     @SneakyThrows

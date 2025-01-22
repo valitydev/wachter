@@ -7,7 +7,7 @@
     <parent>
         <groupId>dev.vality</groupId>
         <artifactId>service-parent-pom</artifactId>
-        <version>3.0.1</version>
+        <version>3.0.8</version>
     </parent>
 
     <artifactId>wachter</artifactId>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>bouncer-proto</artifactId>
-            <version>1.55-ef7403f</version>
+            <version>1.56-07dcc7b</version>
         </dependency>
         <dependency>
             <groupId>dev.vality.geck</groupId>
@@ -49,7 +49,6 @@
         <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>damsel</artifactId>
-            <version>1.649-7ed2112</version>
         </dependency>
 
         <!--spring-->
@@ -127,14 +126,9 @@
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.79</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
             <version>1.79</version>
+            <scope>test</scope>
         </dependency>
 
 
@@ -164,9 +158,6 @@
             <version>0.12.6</version>
             <scope>test</scope>
         </dependency>
-
-
-
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-contract-wiremock</artifactId>
