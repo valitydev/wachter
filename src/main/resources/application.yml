@@ -36,8 +36,9 @@ spring:
         url: https://auth.domain
         jwt:
           realm: internal
-          issuer-uri: ${spring.security.oauth2.resourceserver.url}/auth/realms/${spring.security.oauth2.resourceserver.jwt.realm}
-          resource-id: koffing
+          issuer-uri: >
+            ${spring.security.oauth2.resourceserver.url}/auth/realms/
+            ${spring.security.oauth2.resourceserver.jwt.realm}
 info:
   version: '@project.version@'
   stage: dev

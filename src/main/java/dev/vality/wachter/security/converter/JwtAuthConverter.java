@@ -1,7 +1,6 @@
 package dev.vality.wachter.security.converter;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -25,8 +24,6 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
     private static final String resourceAttribute = "resource_access";
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter =
             new JwtGrantedAuthoritiesConverter();
-    @Value("${spring.security.oauth2.resourceserver.jwt.resource-id}")
-    private String resourceId;
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
