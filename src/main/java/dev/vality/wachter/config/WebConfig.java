@@ -72,7 +72,7 @@ public class WebConfig {
     private void addWoodyContext() {
         var token = (JwtAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
         setCustomMetadataValue(UserIdentityIdExtensionKit.KEY, token.getToken().getClaimAsString(JwtClaimNames.SUB));
-        setCustomMetadataValue(UserIdentityUsernameExtensionKit.KEY, token.getPrincipal());
+        setCustomMetadataValue(UserIdentityUsernameExtensionKit.KEY, ((Jwt)token.getPrincipal()).getClaimAsString("preferred_username"));
         setCustomMetadataValue(UserIdentityEmailExtensionKit.KEY, token.getToken().getClaimAsString("email"));
         setCustomMetadataValue(UserIdentityRealmExtensionKit.KEY, extractRealm(token.getToken()));
     }
