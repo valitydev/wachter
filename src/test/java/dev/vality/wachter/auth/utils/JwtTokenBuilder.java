@@ -47,6 +47,10 @@ public class JwtTokenBuilder {
     }
 
     public String generateJwtWithRoles(long iat, long exp, String issuer, String... roles) {
+        return generateJwtWithRoles(privateKey, iat, exp, issuer, roles);
+    }
+
+    public String generateJwtWithRoles(PrivateKey privateKey, long iat, long exp, String issuer, String... roles) {
         String payload;
         try {
             payload = new JSONObject()

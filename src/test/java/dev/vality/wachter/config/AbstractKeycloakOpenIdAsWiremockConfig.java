@@ -10,6 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.security.PrivateKey;
+
 @SuppressWarnings("LineLength")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -34,6 +36,12 @@ public abstract class AbstractKeycloakOpenIdAsWiremockConfig {
 
     protected String generateSimpleJwtWithRoles() {
         return keycloakOpenIdStub.generateJwt("Deanonimus", "unknown", "Domain", "messages:methodName",
+                "DominantCache", "!DominantCache:methodName");
+
+    }
+
+    protected String generateSimpleJwtWithRolesAndCustomKey(PrivateKey privateKey) {
+        return keycloakOpenIdStub.generateJwtWithCustomKey(privateKey, "Deanonimus", "unknown", "Domain", "messages:methodName",
                 "DominantCache", "!DominantCache:methodName");
 
     }

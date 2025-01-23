@@ -4,6 +4,8 @@ import dev.vality.wachter.testutil.GenerateSelfSigned;
 import dev.vality.wachter.testutil.PublicKeyUtil;
 
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.time.Instant;
 import java.util.Base64;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -85,6 +87,12 @@ public class KeycloakOpenIdStub {
 
     public String generateJwt(String... roles) {
         return jwtTokenBuilder.generateJwtWithRoles(issuer, roles);
+    }
+
+    public String generateJwtWithCustomKey(PrivateKey privateKey, String... roles) {
+        long iat = Instant.now().getEpochSecond();
+        long exp = iat + 60 * 10;
+        return jwtTokenBuilder.generateJwtWithRoles(privateKey, iat, exp, issuer, roles);
     }
 
 }

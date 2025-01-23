@@ -16,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.security.KeyPairGenerator;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
@@ -120,6 +121,24 @@ class ErrorControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .andExpect(result -> assertEquals("User darkside-the-best@mail.com don't have access" +
                                 " to methodName in service Invoicing",
                         Objects.requireNonNull(result.getResolvedException()).getMessage()));
+    }
+
+    @Test
+    @SneakyThrows
+    void requestWithBadSignToken() {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(2048);
+        var keyPair = keyGen.generateKeyPair();
+
+        mvc.perform(post("/wachter")
+                        .header("Authorization", "Bearer " +
+                                generateSimpleJwtWithRolesAndCustomKey(keyPair.getPrivate()))
+                        .header("X-Request-ID", randomUUID())
+                        .header("Service", "Domain")
+                        .header("X-Request-Deadline", Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .content(TMessageUtil.createTMessage(protocolFactory)))
+                .andDo(print())
+                .andExpect(status().is4xxClientError());
     }
 
     @Test
