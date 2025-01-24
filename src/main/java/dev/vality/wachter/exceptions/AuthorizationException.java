@@ -1,4 +1,4 @@
-package dev.vality.wachter.exeptions;
+package dev.vality.wachter.exceptions;
 
 public class AuthorizationException extends WachterException {
 

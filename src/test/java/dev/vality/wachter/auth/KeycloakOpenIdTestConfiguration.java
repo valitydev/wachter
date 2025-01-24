@@ -2,6 +2,7 @@ package dev.vality.wachter.auth;
 
 import dev.vality.wachter.auth.utils.JwtTokenBuilder;
 import dev.vality.wachter.auth.utils.KeycloakOpenIdStub;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,9 +11,11 @@ import org.springframework.context.annotation.Configuration;
 public class KeycloakOpenIdTestConfiguration {
 
     @Bean
-    public KeycloakOpenIdStub keycloakOpenIdStub(@Value("${keycloak.auth-server-url}") String keycloakAuthServerUrl,
-                                                 @Value("${keycloak.realm}") String keycloakRealm,
-                                                 JwtTokenBuilder jwtTokenBuilder) {
-        return new KeycloakOpenIdStub(keycloakAuthServerUrl, keycloakRealm, jwtTokenBuilder);
+    @SneakyThrows
+    public KeycloakOpenIdStub keycloakOpenIdStub(
+            @Value("${spring.security.oauth2.resourceserver.url}") String keycloakAuthServerUrl,
+            @Value("${spring.security.oauth2.resourceserver.jwt.realm}") String keycloakRealm,
+            JwtTokenBuilder jwtTokenBuilder) {
+        return new KeycloakOpenIdStub(keycloakAuthServerUrl + "/auth", keycloakRealm, jwtTokenBuilder);
     }
 }

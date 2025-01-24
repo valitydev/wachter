@@ -1,4 +1,4 @@
-package dev.vality.wachter.exeptions;
+package dev.vality.wachter.exceptions;
 
 public class WachterException extends RuntimeException {
 
@@ -6,7 +6,4 @@ public class WachterException extends RuntimeException {
         super(message);
     }
 
-    public WachterException(String message, Throwable cause) {
-        super(message, cause);
-    }
 }

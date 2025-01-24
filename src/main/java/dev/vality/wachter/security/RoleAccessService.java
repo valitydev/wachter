@@ -1,6 +1,6 @@
 package dev.vality.wachter.security;
 
-import dev.vality.wachter.exeptions.AuthorizationException;
+import dev.vality.wachter.exceptions.AuthorizationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,6 @@ public class RoleAccessService {
                     String.format("User %s don't have roles with trace_id %s",
                             accessData.getUserEmail(), accessData.getTraceId()));
         }
-
         if (isRoleContainsForbiddenServiceAndMethodName(accessData)) {
             throw new AuthorizationException(
                     String.format("User %s don't have access to %s in service %s with trace_id %s",

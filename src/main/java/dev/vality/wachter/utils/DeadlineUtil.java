@@ -1,6 +1,6 @@
 package dev.vality.wachter.utils;
 
-import dev.vality.wachter.exeptions.DeadlineException;
+import dev.vality.wachter.exceptions.DeadlineException;
 import lombok.experimental.UtilityClass;
 
 import java.util.ArrayList;
@@ -105,7 +105,7 @@ public class DeadlineUtil {
         if (doubles.isEmpty()) {
             return null;
         }
-        return Double.valueOf(doubles.get(0));
+        return Double.valueOf(doubles.getFirst());
     }
 
     private static List<String> match(String regex, String data) {

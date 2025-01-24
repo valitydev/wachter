@@ -6,27 +6,29 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensi
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
-import org.keycloak.KeycloakSecurityContext;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
-import org.keycloak.representations.AccessToken;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
-import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import static dev.vality.woody.api.trace.ContextUtils.setCustomMetadataValue;
 import static dev.vality.woody.api.trace.ContextUtils.setDeadline;
 
+@Slf4j
 @Configuration
 @SuppressWarnings({"ParameterName", "LocalVariableName"})
 public class WebConfig {
@@ -39,16 +41,12 @@ public class WebConfig {
             @Override
             protected void doFilterInternal(HttpServletRequest request,
                                             HttpServletResponse response,
-                                            FilterChain filterChain) throws ServletException, IOException {
+                                            FilterChain filterChain) {
                 woodyFlow.createServiceFork(
                                 () -> {
                                     try {
-                                        if (request.getUserPrincipal() != null) {
-                                            addWoodyContext(request.getUserPrincipal());
-                                        }
-
+                                        addWoodyContext();
                                         setWoodyDeadline(request);
-
                                         filterChain.doFilter(request, response);
                                     } catch (IOException | ServletException e) {
                                         sneakyThrow(e);
@@ -71,15 +69,18 @@ public class WebConfig {
         return filterRegistrationBean;
     }
 
-    private void addWoodyContext(Principal principal) {
-        KeycloakSecurityContext keycloakSecurityContext =
-                ((KeycloakAuthenticationToken) principal).getAccount().getKeycloakSecurityContext();
-        AccessToken accessToken = keycloakSecurityContext.getToken();
+    private void addWoodyContext() {
+        var token = (JwtAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        setCustomMetadataValue(UserIdentityIdExtensionKit.KEY, token.getToken().getClaimAsString(JwtClaimNames.SUB));
+        setCustomMetadataValue(UserIdentityUsernameExtensionKit.KEY,
+                ((Jwt)token.getPrincipal()).getClaimAsString("preferred_username"));
+        setCustomMetadataValue(UserIdentityEmailExtensionKit.KEY, token.getToken().getClaimAsString("email"));
+        setCustomMetadataValue(UserIdentityRealmExtensionKit.KEY, extractRealm(token.getToken()));
+    }
 
-        setCustomMetadataValue(UserIdentityIdExtensionKit.KEY, accessToken.getSubject());
-        setCustomMetadataValue(UserIdentityUsernameExtensionKit.KEY, accessToken.getPreferredUsername());
-        setCustomMetadataValue(UserIdentityEmailExtensionKit.KEY, accessToken.getEmail());
-        setCustomMetadataValue(UserIdentityRealmExtensionKit.KEY, keycloakSecurityContext.getRealm());
+    private String extractRealm(Jwt token) {
+        var iss =  token.getClaimAsString("iss");
+        return iss.substring(iss.lastIndexOf("/"));
     }
 
     private void setWoodyDeadline(HttpServletRequest request) {

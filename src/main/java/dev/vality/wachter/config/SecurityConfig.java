@@ -1,53 +1,40 @@
 package dev.vality.wachter.config;
 
-import org.keycloak.adapters.springsecurity.KeycloakSecurityComponents;
+import dev.vality.wachter.security.converter.JwtAuthConverter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
-import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
-
 @Configuration
-@ComponentScan(
-        basePackageClasses = KeycloakSecurityComponents.class,
-        excludeFilters = @ComponentScan.Filter(
-                type = FilterType.REGEX,
-                pattern = "org.keycloak.adapters.springsecurity.management.HttpSessionManager"))
-@EnableMethodSecurity(proxyTargetClass = true)
+@EnableWebSecurity
+@RequiredArgsConstructor
 @ConditionalOnProperty(value = "auth.enabled", havingValue = "true")
 public class SecurityConfig {
 
-    @Bean
-    protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-        return new NullAuthenticatedSessionStrategy();
-    }
+    private final JwtAuthConverter jwtAuthConverter;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable);
+        http.authorizeHttpRequests(
+                (authorize) -> authorize
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**/health/liveness").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**/health/readiness").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**/actuator/prometheus").permitAll()
-                        .anyRequest().authenticated())
-                .oauth2Login(withDefaults())
-                .oauth2Client(withDefaults())
-                .oauth2ResourceServer(withDefaults());
-
+                        .anyRequest().authenticated());
+        http.oauth2ResourceServer(server -> server.jwt(token -> token.jwtAuthenticationConverter(jwtAuthConverter)));
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
 
