@@ -45,7 +45,10 @@ public class WebConfig {
                 woodyFlow.createServiceFork(
                                 () -> {
                                     try {
-                                        addWoodyContext();
+                                        var auth = SecurityContextHolder.getContext().getAuthentication();
+                                        if (auth instanceof JwtAuthenticationToken) {
+                                            addWoodyContext((JwtAuthenticationToken) auth);
+                                        }
                                         setWoodyDeadline(request);
                                         filterChain.doFilter(request, response);
                                     } catch (IOException | ServletException e) {
@@ -69,8 +72,7 @@ public class WebConfig {
         return filterRegistrationBean;
     }
 
-    private void addWoodyContext() {
-        var token = (JwtAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    private void addWoodyContext(JwtAuthenticationToken token) {
         setCustomMetadataValue(UserIdentityIdExtensionKit.KEY, token.getToken().getClaimAsString(JwtClaimNames.SUB));
         setCustomMetadataValue(UserIdentityUsernameExtensionKit.KEY,
                 ((Jwt)token.getPrincipal()).getClaimAsString("preferred_username"));
