@@ -1,6 +1,7 @@
 package dev.vality.wachter.controller;
 
 import dev.vality.wachter.exceptions.AuthorizationException;
+import dev.vality.wachter.exceptions.NotFoundException;
 import dev.vality.wachter.exceptions.WachterException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,9 +34,15 @@ public class ErrorControllerAdvice {
     }
 
     @ExceptionHandler({AuthorizationException.class})
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public void handleAccessDeniedException(AuthorizationException e) {
-        log.warn("<- Res [403]: Request denied access", e);
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public void handleAuthorizationException(AuthorizationException e) {
+        log.warn("<- Res [401]: Request denied access", e);
+    }
+
+    @ExceptionHandler({NotFoundException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public void handleNotFoundException(NotFoundException e) {
+        log.warn("<- Res [404]: Not found", e);
     }
 
     @ExceptionHandler(HttpClientErrorException.class)
