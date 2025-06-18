@@ -1,8 +1,6 @@
 package dev.vality.wachter.controller;
 
-import dev.vality.wachter.exceptions.AuthorizationException;
 import dev.vality.wachter.exceptions.WachterException;
-import javassist.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,9 +31,9 @@ public class ErrorControllerAdvice {
         log.warn("<- Res [403]: Request denied access", e);
     }
 
-    @ExceptionHandler({NotFoundException.class})
+    @ExceptionHandler({HttpClientErrorException.NotFound.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public void handleAccessDeniedException(AuthorizationException e) {
+    public void handleNotFoundException(HttpClientErrorException.NotFound e) {
         log.warn("<- Res [404]: Not found", e);
     }
 
