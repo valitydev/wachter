@@ -1,6 +1,7 @@
 package dev.vality.wachter.mapper;
 
 import dev.vality.wachter.config.properties.WachterProperties;
+import dev.vality.wachter.exceptions.NotFoundException;
 import dev.vality.wachter.exceptions.WachterException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class ServiceMapper {
                 .get(request.getHeader(wachterProperties.getServiceHeader()));
 
         if (service == null) {
-            throw new WachterException(
+            throw new NotFoundException(
                     String.format("Service \"%s\" not found in configuration",
                             request.getHeader(wachterProperties.getServiceHeader())));
         }
