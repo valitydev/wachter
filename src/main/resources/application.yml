@@ -6,10 +6,15 @@ management:
   server:
     port: ${management.port}
   metrics:
+    export:
+      prometheus:
+        enabled: true
     tags:
-      application: '@project.name@'
+      application: {{ $applicationName }}
   endpoint:
     health:
+      probes:
+        enabled: true
       show-details: always
     metrics:
       enabled: true
@@ -19,10 +24,6 @@ management:
     web:
       exposure:
         include: health,info,prometheus
-  prometheus:
-    metrics:
-      export:
-        enabled: true
 
 spring:
   application:
@@ -30,6 +31,9 @@ spring:
   output:
     ansi:
       enabled: always
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
   security:
     oauth2:
       resourceserver:
