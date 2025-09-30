@@ -64,10 +64,10 @@ public class KeycloakOpenIdStub {
                 }
                 """.formatted(
                 PublicKeyUtil.getExponent(jwtTokenBuilder.getPublicKey()),
-                        PublicKeyUtil.getModulus(jwtTokenBuilder.getPublicKey()),
+                PublicKeyUtil.getModulus(jwtTokenBuilder.getPublicKey()),
                 Base64.getEncoder().encodeToString(
                         GenerateSelfSigned.generateCertificate(new KeyPair(jwtTokenBuilder.getPublicKey(),
-                        jwtTokenBuilder.getPrivateKey())).getEncoded()));
+                                jwtTokenBuilder.getPrivateKey())).getEncoded()));
     }
 
     public void givenStub() {

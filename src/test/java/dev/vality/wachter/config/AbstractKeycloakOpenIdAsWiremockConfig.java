@@ -41,7 +41,8 @@ public abstract class AbstractKeycloakOpenIdAsWiremockConfig {
     }
 
     protected String generateSimpleJwtWithRolesAndCustomKey(PrivateKey privateKey) {
-        return keycloakOpenIdStub.generateJwtWithCustomKey(privateKey, "Deanonimus", "unknown", "Domain", "messages:methodName",
+        return keycloakOpenIdStub.generateJwtWithCustomKey(privateKey, "Deanonimus", "unknown", "Domain",
+                "messages:methodName",
                 "DominantCache", "!DominantCache:methodName");
 
     }
