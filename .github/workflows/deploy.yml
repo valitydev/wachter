@@ -5,6 +5,7 @@ on:
     branches:
       - 'master'
       - 'main'
+      - 'epic/backward-compatibility'
 
 env:
   REGISTRY: ghcr.io
