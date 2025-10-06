@@ -123,7 +123,7 @@ class WachterClientOperationsTest {
         final var parts = extracted.split(", ");
         assertEquals(2, parts.length);
         final var longValue = parts[0].substring(parts[0].indexOf('=') + 1);
-        assertEquals(30, longValue.length());
+        assertEquals(40, longValue.length());
         assertEquals("value", parts[1].substring(parts[1].indexOf('=') + 1));
     }
 }

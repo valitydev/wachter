@@ -24,8 +24,6 @@ import static dev.vality.woody.api.trace.ContextUtils.getCustomMetadataValue;
 @Component
 public class WachterRequestFactory {
 
-    private static final int PARAMETER_VALUE_LIMIT = 30;
-
     public HttpHeaders buildHeaders(HttpServletRequest servletRequest) {
         var headers = collectHeaders(servletRequest);
         mergeNormalizedWoodyHeaders(servletRequest, headers);
@@ -50,8 +48,7 @@ public class WachterRequestFactory {
 
     public String extract(HttpServletRequest servletRequest) {
         return servletRequest.getParameterMap().entrySet().stream()
-                .map(entry -> entry.getKey() + "=" + truncate(String.join(", ", entry.getValue()),
-                        PARAMETER_VALUE_LIMIT))
+                .map(entry -> entry.getKey() + "=" + String.join(", ", entry.getValue()))
                 .collect(Collectors.joining(", "));
     }
 

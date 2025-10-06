@@ -18,7 +18,7 @@ public class WachterClientExtractTest {
         String result = factory.extract(request);
 
         Assertions.assertEquals(
-                "short=value, long=123456789012345678901234567890, multi=first, second",
+                "short=value, long=12345678901234567890123456789012345, multi=first, second",
                 result);
     }
 }

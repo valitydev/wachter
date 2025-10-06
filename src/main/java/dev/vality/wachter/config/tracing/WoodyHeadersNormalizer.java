@@ -11,9 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import static dev.vality.wachter.constants.HeadersConstants.*;
 import static dev.vality.wachter.utils.DeadlineUtil.*;
@@ -23,34 +21,47 @@ public class WoodyHeadersNormalizer {
 
     public Map<String, String> normalize(HttpServletRequest request) {
         var normalized = new HashMap<String, String>();
-        var headerNames = request.getHeaderNames();
-        while (headerNames != null && headerNames.hasMoreElements()) {
-            var name = headerNames.nextElement();
-            if (name == null) {
+        var headerNamesEnumeration = request.getHeaderNames();
+        if (headerNamesEnumeration != null) {
+            var headerNames = Collections.list(headerNamesEnumeration);
+            normalizeWoodyHeaders(request, headerNames, normalized);
+            normalizeOtelHeaders(request, normalized);
+        }
+        mergeJwtIntoHeaders(normalized);
+        mergeRequestDeadline(request, normalized);
+        return normalized.isEmpty() ? Map.of() : Map.copyOf(normalized);
+    }
+
+    private void normalizeWoodyHeaders(HttpServletRequest request, List<String> headerNames,
+                                       Map<String, String> headers) {
+        for (var name : headerNames) {
+            var lowerCase = name.toLowerCase(Locale.ROOT);
+            if (!lowerCase.startsWith(WOODY_PREFIX) && !lowerCase.startsWith(X_WOODY_PREFIX)) {
                 continue;
             }
             var value = request.getHeader(name);
             if (value == null) {
                 continue;
             }
-            var lowerCase = name.toLowerCase(Locale.ROOT);
             if (lowerCase.startsWith(WOODY_PREFIX)) {
-                normalized.put(lowerCase, value);
-            } else if (lowerCase.startsWith(X_WOODY_PREFIX)) {
+                headers.put(lowerCase, value);
+            } else {
                 var suffix = lowerCase.substring(X_WOODY_PREFIX.length());
                 if (suffix.startsWith(WoodySuffixes.META_USER_IDENTITY)) {
                     var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY.length());
-                    normalized.put(WOODY_META_USER_IDENTITY_PREFIX + metaKey, value);
+                    headers.put(WOODY_META_USER_IDENTITY_PREFIX + metaKey, value);
                 } else {
-                    normalized.put(WOODY_PREFIX + suffix, value);
+                    headers.put(WOODY_PREFIX + suffix, value);
                 }
-            } else if (OTEL_TRACE_PARENT.equalsIgnoreCase(name)) {
-                normalized.put(OTEL_TRACE_PARENT, value);
             }
         }
-        mergeJwtIntoHeaders(normalized);
-        mergeRequestDeadline(request, normalized);
-        return normalized.isEmpty() ? Map.of() : Map.copyOf(normalized);
+    }
+
+    private void normalizeOtelHeaders(HttpServletRequest request, Map<String, String> headers) {
+        var traceParent = request.getHeader(OTEL_TRACE_PARENT);
+        if (traceParent != null) {
+            headers.put(OTEL_TRACE_PARENT, traceParent);
+        }
     }
 
     private void mergeJwtIntoHeaders(Map<String, String> headers) {

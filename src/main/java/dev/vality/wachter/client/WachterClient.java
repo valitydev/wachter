@@ -25,7 +25,7 @@ public record WachterClient(RestClient restClient, WachterRequestFactory request
                 .uri(url)
                 .headers(httpHeaders -> httpHeaders.addAll(headers));
 
-        if (supportsBody(httpMethod) && !ObjectUtils.isEmpty(contentData)) {
+        if (!ObjectUtils.isEmpty(contentData)) {
             requestSpec = requestSpec.body(contentData);
         }
 
@@ -48,12 +48,5 @@ public record WachterClient(RestClient restClient, WachterRequestFactory request
         } catch (IllegalArgumentException ex) {
             return HttpMethod.POST;
         }
-    }
-
-    private boolean supportsBody(HttpMethod method) {
-        return HttpMethod.POST.equals(method)
-                || HttpMethod.PUT.equals(method)
-                || HttpMethod.PATCH.equals(method)
-                || HttpMethod.DELETE.equals(method);
     }
 }
