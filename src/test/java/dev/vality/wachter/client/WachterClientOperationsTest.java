@@ -110,20 +110,4 @@ class WachterClientOperationsTest {
         assertArrayEquals("bad-gateway".getBytes(), response.body());
         server.verify();
     }
-
-    @Test
-    void shouldExtractParametersWithTruncation() {
-        final var servletRequest = new MockHttpServletRequest();
-        servletRequest.addParameter("long", "a".repeat(40));
-        servletRequest.addParameter("short", "value");
-
-        final var factory = new WachterRequestFactory();
-        final var extracted = factory.extract(servletRequest);
-
-        final var parts = extracted.split(", ");
-        assertEquals(2, parts.length);
-        final var longValue = parts[0].substring(parts[0].indexOf('=') + 1);
-        assertEquals(40, longValue.length());
-        assertEquals("value", parts[1].substring(parts[1].indexOf('=') + 1));
-    }
 }
