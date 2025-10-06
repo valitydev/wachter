@@ -20,7 +20,7 @@ public class ContextUtil {
         mockRequiredTBaseProcessor = new MockTBaseProcessor(MockMode.REQUIRED_ONLY, 15, 1);
         Map.Entry<FieldHandler, String[]> timeFields = Map.entry(
                 structHandler -> structHandler.value(Instant.now().toString()),
-                new String[]{"conversation_id", "messages", "status", "user_id", "email", "fullname",
+                new String[] {"conversation_id", "messages", "status", "user_id", "email", "fullname",
                         "held_until", "from_time", "to_time"}
         );
         mockRequiredTBaseProcessor.addFieldHandler(timeFields.getKey(), timeFields.getValue());

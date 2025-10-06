@@ -100,3 +100,8 @@ http-client:
   defaultMaxPerRoute: 200
 
 auth.enabled: true
+
+otel:
+  resource: http://localhost:4318/v1/traces
+  timeout: 60000
+  enabled: true

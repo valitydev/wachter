@@ -25,14 +25,6 @@
     <dependencies>
         <!--vality-->
         <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-        </dependency>
-        <dependency>
             <groupId>dev.vality</groupId>
             <artifactId>shared-resources</artifactId>
             <version>${shared-resources.version}</version>
@@ -99,11 +91,6 @@
 
         <!--third party-->
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
@@ -130,6 +117,11 @@
             <artifactId>bcpkix-jdk18on</artifactId>
             <version>1.79</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-semconv</artifactId>
+            <version>1.29.0-alpha</version>
         </dependency>
 
         <!--test-->

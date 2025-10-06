@@ -1,47 +1,34 @@
 package dev.vality.wachter.config;
 
+import dev.vality.wachter.client.WachterClient;
+import dev.vality.wachter.client.WachterRequestFactory;
 import dev.vality.wachter.config.properties.HttpClientProperties;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.protocol.HttpContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.web.client.RestClient;
+
+import java.net.http.HttpClient;
+import java.time.Duration;
 
 @Configuration
 public class ApplicationConfig {
 
     @Bean
-    public PoolingHttpClientConnectionManager poolingHttpClientConnectionManager(HttpClientProperties properties) {
-        PoolingHttpClientConnectionManager result = new PoolingHttpClientConnectionManager();
-        result.setMaxTotal(properties.getMaxTotalPooling());
-        result.setDefaultMaxPerRoute(properties.getDefaultMaxPerRoute());
-        return result;
+    public RestClient restClient(RestClient.Builder builder, HttpClientProperties properties) {
+        var connectTimeout = Duration.ofMillis(properties.getConnectTimeout());
+        var httpClient = HttpClient.newBuilder()
+                .connectTimeout(connectTimeout)
+                .build();
+
+        var requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(Duration.ofMillis(properties.getSocketTimeout()));
+
+        return builder.requestFactory(requestFactory).build();
     }
 
     @Bean
-    public HttpClient httpclient(PoolingHttpClientConnectionManager manager, HttpClientProperties properties) {
-        return HttpClients.custom()
-                .setDefaultRequestConfig(RequestConfig
-                        .custom()
-                        .setConnectTimeout(properties.getConnectTimeout())
-                        .setConnectionRequestTimeout(properties.getConnectionRequestTimeout())
-                        .setSocketTimeout(properties.getSocketTimeout())
-                        .build())
-                .addInterceptorFirst(new ContentLengthHeaderRemover())
-                .setConnectionManager(manager)
-                .build();
+    public WachterClient wachterClient(RestClient restClient, WachterRequestFactory requestFactory) {
+        return new WachterClient(restClient, requestFactory);
     }
-
-    private static class ContentLengthHeaderRemover implements HttpRequestInterceptor {
-        @Override
-        public void process(HttpRequest request, HttpContext context) {
-            request.removeHeaders(HTTP.CONTENT_LEN);
-        }
-    }
-
 }
