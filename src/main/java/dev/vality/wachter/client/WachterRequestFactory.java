@@ -7,7 +7,9 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensi
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
+import dev.vality.wachter.config.http.HttpHeadersPolicy;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -15,30 +17,17 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static dev.vality.wachter.constants.HeadersConstants.*;
 import static dev.vality.woody.api.trace.ContextUtils.getCustomMetadataValue;
 
 @Component
+@RequiredArgsConstructor
 public class WachterRequestFactory {
 
-    private static final Set<String> SKIPPED_HEADERS = Set.of(
-            HttpHeaders.HOST.toLowerCase(Locale.ROOT),
-            HttpHeaders.CONTENT_LENGTH.toLowerCase(Locale.ROOT),
-            HttpHeaders.TRANSFER_ENCODING.toLowerCase(Locale.ROOT),
-            HttpHeaders.CONNECTION.toLowerCase(Locale.ROOT),
-            HttpHeaders.TE.toLowerCase(Locale.ROOT),
-            "proxy-connection",
-            "keep-alive",
-            "proxy-authenticate",
-            "proxy-authorization",
-            "trailer",
-            "upgrade"
-    );
+    private final HttpHeadersPolicy httpHeadersPolicy;
 
     public HttpHeaders buildHeaders(HttpServletRequest servletRequest) {
         var headers = collectHeaders(servletRequest);
@@ -73,7 +62,7 @@ public class WachterRequestFactory {
         var headerNames = servletRequest.getHeaderNames();
         while (headerNames != null && headerNames.hasMoreElements()) {
             var name = headerNames.nextElement();
-            if (shouldSkipHeader(name)) {
+            if (httpHeadersPolicy.shouldExcludeFromRequest(name)) {
                 continue;
             }
             var value = servletRequest.getHeader(name);
@@ -82,10 +71,6 @@ public class WachterRequestFactory {
             }
         }
         return headers;
-    }
-
-    private boolean shouldSkipHeader(String headerName) {
-        return headerName != null && SKIPPED_HEADERS.contains(headerName.toLowerCase(Locale.ROOT));
     }
 
     private void mergeNormalizedWoodyHeaders(HttpServletRequest servletRequest, Map<String, String> headers) {

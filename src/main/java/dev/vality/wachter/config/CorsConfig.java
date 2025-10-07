@@ -1,5 +1,8 @@
 package dev.vality.wachter.config;
 
+import dev.vality.wachter.config.http.HttpHeadersPolicy;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,12 +11,14 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.util.List;
 
 @Configuration
+@RequiredArgsConstructor
 public class CorsConfig {
+
+    private final HttpHeadersPolicy httpHeadersPolicy;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -27,7 +32,7 @@ public class CorsConfig {
                 HttpMethod.DELETE.name(),
                 HttpMethod.OPTIONS.name()
         ));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(httpHeadersPolicy.getCorsAllowedHeaders());
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(1800L);
 

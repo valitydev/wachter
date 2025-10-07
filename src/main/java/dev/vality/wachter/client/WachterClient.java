@@ -1,9 +1,11 @@
 package dev.vality.wachter.client;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestClient;
 
@@ -13,7 +15,12 @@ import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
-public record WachterClient(RestClient restClient, WachterRequestFactory requestFactory) {
+@Component
+@RequiredArgsConstructor
+public class WachterClient {
+
+    private final RestClient restClient;
+    private final WachterRequestFactory requestFactory;
 
     private static final byte[] EMPTY_BODY = new byte[0];
     private static final Set<String> SENSITIVE_HEADERS = Set.of(

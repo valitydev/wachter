@@ -181,7 +181,7 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         verify(postRequestedFor(urlEqualTo("/domain"))
                 .withHeader(HttpHeaders.HOST, matching("localhost:\\d+"))
                 .withoutHeader(HttpHeaders.TRANSFER_ENCODING)
-                .withHeader(HttpHeaders.CONNECTION, notMatching("(?i).*keep-alive.*"))
+                .withoutHeader(HttpHeaders.CONNECTION)
                 .withoutHeader(HttpHeaders.TE)
                 .withRequestBody(binaryEqualTo(payload)));
     }

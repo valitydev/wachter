@@ -1,6 +1,7 @@
 package dev.vality.wachter.client;
 
 import dev.vality.wachter.constants.RequestAttributeNames;
+import dev.vality.wachter.config.http.HttpHeadersPolicy;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -44,7 +45,7 @@ class WachterClientOperationsTest {
                 .andExpect(content().bytes(payload))
                 .andRespond(withSuccess(expectedResponse, MediaType.APPLICATION_OCTET_STREAM));
 
-        final var factory = new WachterRequestFactory();
+        final var factory = new WachterRequestFactory(new HttpHeadersPolicy());
         final var client = new WachterClient(restClient, factory);
 
         final var actualResponse = client.send(servletRequest, payload, "http://upstream");
@@ -72,7 +73,7 @@ class WachterClientOperationsTest {
                 .andExpect(header("Accept", MediaType.APPLICATION_JSON_VALUE))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        final var factory = new WachterRequestFactory();
+        final var factory = new WachterRequestFactory(new HttpHeadersPolicy());
         final var client = new WachterClient(restClient, factory);
 
         final var response = client.send(servletRequest, null, "http://upstream/resource");
@@ -100,7 +101,7 @@ class WachterClientOperationsTest {
                         .body("bad-gateway")
                         .contentType(MediaType.TEXT_PLAIN));
 
-        final var factory = new WachterRequestFactory();
+        final var factory = new WachterRequestFactory(new HttpHeadersPolicy());
         final var client = new WachterClient(restClient, factory);
 
         final var response = client.send(servletRequest, payload, "http://upstream/fail");
