@@ -1,6 +1,7 @@
 package dev.vality.wachter.client;
 
 import dev.vality.wachter.constants.RequestAttributeNames;
+import dev.vality.wachter.http.HttpHeadersPolicy;
 import dev.vality.woody.api.trace.TraceData;
 import dev.vality.woody.api.trace.context.TraceContext;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
@@ -25,6 +26,8 @@ import static dev.vality.woody.api.trace.ContextUtils.setDeadline;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WachterRequestFactoryTest {
+
+    private final HttpHeadersPolicy httpHeadersPolicy = new HttpHeadersPolicy();
 
     @AfterEach
     void tearDown() {
@@ -53,7 +56,7 @@ class WachterRequestFactoryTest {
         setCustomMetadataValue(UserIdentityEmailExtensionKit.KEY, "ctx@example.com");
         setCustomMetadataValue(UserIdentityRealmExtensionKit.KEY, "/realm");
 
-        final var factory = new WachterRequestFactory();
+        final var factory = new WachterRequestFactory(httpHeadersPolicy);
         HttpHeaders headers = factory.buildHeaders(servletRequest);
 
         assertEquals("trace-id", headers.getFirst(WOODY_TRACE_ID));
@@ -102,7 +105,7 @@ class WachterRequestFactoryTest {
         final var jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(60), jwtHeaders, jwtClaims);
         SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
 
-        final var factory = new WachterRequestFactory();
+        final var factory = new WachterRequestFactory(httpHeadersPolicy);
         HttpHeaders headers = factory.buildHeaders(servletRequest);
 
         assertEquals("jwt-subject", headers.getFirst(WOODY_META_USER_IDENTITY_PREFIX + "id"));
@@ -127,7 +130,7 @@ class WachterRequestFactoryTest {
         final var jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(60), jwtHeaders, jwtClaims);
         SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
 
-        final var factory = new WachterRequestFactory();
+        final var factory = new WachterRequestFactory(httpHeadersPolicy);
         HttpHeaders headers = factory.buildHeaders(servletRequest);
 
         assertEquals("jwt-subject", headers.getFirst(WOODY_META_USER_IDENTITY_PREFIX + "id"));
@@ -158,7 +161,7 @@ class WachterRequestFactoryTest {
         final var jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(60), jwtHeaders, jwtClaims);
         SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
 
-        final var factory = new WachterRequestFactory();
+        final var factory = new WachterRequestFactory(httpHeadersPolicy);
         HttpHeaders headers = factory.buildHeaders(servletRequest);
 
         assertEquals("jwt-subject", headers.getFirst(WOODY_META_USER_IDENTITY_PREFIX + "id"));
@@ -173,7 +176,7 @@ class WachterRequestFactoryTest {
         servletRequest.addHeader(X_WOODY_TRACE_ID, "incoming-x-trace");
         servletRequest.setAttribute(RequestAttributeNames.NORMALIZED_WOODY_HEADERS, "unexpected");
 
-        final var factory = new WachterRequestFactory();
+        final var factory = new WachterRequestFactory(httpHeadersPolicy);
         HttpHeaders headers = factory.buildHeaders(servletRequest);
 
         assertEquals("incoming-x-trace", headers.getFirst(X_WOODY_TRACE_ID));

@@ -1,5 +1,6 @@
 package dev.vality.wachter.client;
 
+import dev.vality.wachter.http.HttpHeadersPolicy;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -14,7 +15,7 @@ public class WachterClientExtractTest {
         request.addParameter("multi", "first");
         request.addParameter("multi", "second");
 
-        final var factory = new WachterRequestFactory();
+        final var factory = new WachterRequestFactory(new HttpHeadersPolicy());
         String result = factory.extract(request);
 
         Assertions.assertEquals(
