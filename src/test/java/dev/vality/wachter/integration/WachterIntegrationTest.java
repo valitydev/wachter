@@ -190,7 +190,7 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     void shouldReturnCorsHeadersOnSuccessfulResponse() throws Exception {
         final var deadline = Instant.now().plusSeconds(120);
         final var payload = TMessageUtil.createTMessage(protocolFactory);
-        final var origin = "https://iddqd.empayre.com";
+        final var origin = "https://iddqd.valitydev.com";
 
         stubFor(WireMock.post(urlEqualTo("/domain"))
                 .withRequestBody(binaryEqualTo(payload))
@@ -215,7 +215,7 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     void shouldReturnCorsHeadersOnErrorResponse() throws Exception {
         final var deadline = Instant.now().plusSeconds(120);
         final var payload = TMessageUtil.createTMessage(protocolFactory);
-        final var origin = "https://iddqd.empayre.com";
+        final var origin = "https://iddqd.valitydev.com";
 
         stubFor(WireMock.post(urlEqualTo("/domain"))
                 .withRequestBody(binaryEqualTo(payload))
