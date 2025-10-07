@@ -185,4 +185,54 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .withoutHeader(HttpHeaders.TE)
                 .withRequestBody(binaryEqualTo(payload)));
     }
+
+    @Test
+    void shouldReturnCorsHeadersOnSuccessfulResponse() throws Exception {
+        final var deadline = Instant.now().plusSeconds(120);
+        final var payload = TMessageUtil.createTMessage(protocolFactory);
+        final var origin = "https://iddqd.empayre.com";
+
+        stubFor(WireMock.post(urlEqualTo("/domain"))
+                .withRequestBody(binaryEqualTo(payload))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.OK.value())));
+
+        mockMvc.perform(post("/wachter")
+                        .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
+                        .header("Service", "Domain")
+                        .header(X_REQUEST_ID, UUID.randomUUID().toString())
+                        .header(X_REQUEST_DEADLINE, deadline.toString())
+                        .header(HttpHeaders.ORIGIN, origin)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.header()
+                        .string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin))
+                .andExpect(MockMvcResultMatchers.header()
+                        .string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"));
+    }
+
+    @Test
+    void shouldReturnCorsHeadersOnErrorResponse() throws Exception {
+        final var deadline = Instant.now().plusSeconds(120);
+        final var payload = TMessageUtil.createTMessage(protocolFactory);
+        final var origin = "https://iddqd.empayre.com";
+
+        stubFor(WireMock.post(urlEqualTo("/domain"))
+                .withRequestBody(binaryEqualTo(payload))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.BAD_GATEWAY.value())));
+
+        mockMvc.perform(post("/wachter")
+                        .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
+                        .header("Service", "Domain")
+                        .header(X_REQUEST_ID, UUID.randomUUID().toString())
+                        .header(X_REQUEST_DEADLINE, deadline.toString())
+                        .header(HttpHeaders.ORIGIN, origin)
+                        .content(payload))
+                .andExpect(status().isBadGateway())
+                .andExpect(MockMvcResultMatchers.header()
+                        .string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin))
+                .andExpect(MockMvcResultMatchers.header()
+                        .string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"));
+    }
 }
