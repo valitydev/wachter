@@ -7,7 +7,7 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensi
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
-import dev.vality.wachter.http.HttpHeadersPolicy;
+import dev.vality.wachter.config.http.HttpHeadersPolicy;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -62,7 +62,7 @@ public class WachterRequestFactory {
         var headerNames = servletRequest.getHeaderNames();
         while (headerNames != null && headerNames.hasMoreElements()) {
             var name = headerNames.nextElement();
-            if (httpHeadersPolicy.isHopByHopHeader(name)) {
+            if (httpHeadersPolicy.shouldExcludeFromRequest(name)) {
                 continue;
             }
             var value = servletRequest.getHeader(name);

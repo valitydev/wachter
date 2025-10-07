@@ -1,7 +1,7 @@
 package dev.vality.wachter.client;
 
 import dev.vality.wachter.constants.RequestAttributeNames;
-import dev.vality.wachter.http.HttpHeadersPolicy;
+import dev.vality.wachter.config.http.HttpHeadersPolicy;
 import dev.vality.woody.api.trace.TraceData;
 import dev.vality.woody.api.trace.context.TraceContext;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;

@@ -1,6 +1,6 @@
 package dev.vality.wachter.client;
 
-import dev.vality.wachter.http.HttpHeadersPolicy;
+import dev.vality.wachter.config.http.HttpHeadersPolicy;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;

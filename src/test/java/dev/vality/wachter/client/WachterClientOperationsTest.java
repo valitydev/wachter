@@ -1,7 +1,7 @@
 package dev.vality.wachter.client;
 
 import dev.vality.wachter.constants.RequestAttributeNames;
-import dev.vality.wachter.http.HttpHeadersPolicy;
+import dev.vality.wachter.config.http.HttpHeadersPolicy;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;

@@ -1,6 +1,6 @@
 package dev.vality.wachter.config;
 
-import dev.vality.wachter.http.HttpHeadersPolicy;
+import dev.vality.wachter.config.http.HttpHeadersPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;

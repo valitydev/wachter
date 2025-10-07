@@ -2,7 +2,7 @@ package dev.vality.wachter.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.vality.wachter.config.properties.HttpProperties;
-import dev.vality.wachter.http.HttpHeadersPolicy;
+import dev.vality.wachter.config.http.HttpHeadersPolicy;
 import lombok.RequiredArgsConstructor;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
