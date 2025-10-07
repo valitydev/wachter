@@ -155,4 +155,34 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         assertEquals(parentId, capturedParentId.get());
         assertEquals(deadline, capturedDeadline.get());
     }
+
+    @Test
+    void shouldStripHopByHopHeadersBeforeProxying() throws Exception {
+        final var deadline = Instant.now().plusSeconds(60);
+        final var payload = TMessageUtil.createTMessage(protocolFactory);
+
+        stubFor(WireMock.post(urlEqualTo("/domain"))
+                .withRequestBody(binaryEqualTo(payload))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.OK.value())));
+
+        mockMvc.perform(post("/wachter")
+                        .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
+                        .header("Service", "Domain")
+                        .header(X_REQUEST_ID, UUID.randomUUID().toString())
+                        .header(X_REQUEST_DEADLINE, deadline.toString())
+                        .header(HttpHeaders.TRANSFER_ENCODING, "chunked")
+                        .header(HttpHeaders.CONNECTION, "keep-alive")
+                        .header(HttpHeaders.TE, "trailers")
+                        .header(HttpHeaders.HOST, "example.org")
+                        .content(payload))
+                .andExpect(status().isOk());
+
+        verify(postRequestedFor(urlEqualTo("/domain"))
+                .withHeader(HttpHeaders.HOST, matching("localhost:\\d+"))
+                .withoutHeader(HttpHeaders.TRANSFER_ENCODING)
+                .withHeader(HttpHeaders.CONNECTION, notMatching("(?i).*keep-alive.*"))
+                .withoutHeader(HttpHeaders.TE)
+                .withRequestBody(binaryEqualTo(payload)));
+    }
 }
