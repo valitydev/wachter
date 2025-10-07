@@ -30,18 +30,8 @@
             <version>${shared-resources.version}</version>
         </dependency>
         <dependency>
-            <groupId>dev.vality</groupId>
-            <artifactId>bouncer-proto</artifactId>
-            <version>1.57-31866c3</version>
-        </dependency>
-        <dependency>
             <groupId>dev.vality.geck</groupId>
             <artifactId>serializer</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.vality</groupId>
-            <artifactId>damsel</artifactId>
-            <version>1.652-ecf4977</version>
         </dependency>
 
         <!--spring-->

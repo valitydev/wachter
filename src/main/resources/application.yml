@@ -105,3 +105,10 @@ otel:
   resource: http://localhost:4318/v1/traces
   timeout: 60000
   enabled: true
+
+http:
+  requestTimeout: 60000
+  poolTimeout: 10000
+  connectionTimeout: 10000
+  maxTotalPooling: 200
+  defaultMaxPerRoute: 200
