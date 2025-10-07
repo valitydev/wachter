@@ -7,12 +7,20 @@ import org.springframework.http.HttpMethod;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestClient;
 
+import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 
 @Slf4j
 public record WachterClient(RestClient restClient, WachterRequestFactory requestFactory) {
 
     private static final byte[] EMPTY_BODY = new byte[0];
+    private static final Set<String> SENSITIVE_HEADERS = Set.of(
+            HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT),
+            HttpHeaders.COOKIE.toLowerCase(Locale.ROOT),
+            HttpHeaders.SET_COOKIE.toLowerCase(Locale.ROOT)
+    );
 
     public WachterClientResponse send(HttpServletRequest servletRequest, byte[] contentData, String url) {
         var httpMethod = resolveMethod(servletRequest);
@@ -20,7 +28,8 @@ public record WachterClient(RestClient restClient, WachterRequestFactory request
 
         var headers = requestFactory.buildHeaders(servletRequest);
 
-        log.info("-> Send request to {} {} | params: {}, headers: {}", httpMethod, url, params, headers);
+        log.info("-> Send request to {} {} | params: {} | headers: {}",
+                httpMethod, url, params, sanitizeHeaders(headers));
 
         var requestSpec = restClient.method(httpMethod)
                 .uri(url)
@@ -38,8 +47,8 @@ public record WachterClient(RestClient restClient, WachterRequestFactory request
             return new WachterClientResponse(status, responseHeaders, responseBody);
         });
 
-        log.info("<- Receive response from {} {} | status: {} | params: {}",
-                httpMethod, url, result.statusCode(), params);
+        log.info("<- Receive response from {} {} | status: {} | params: {} | headers: {}",
+                httpMethod, url, result.statusCode(), params, sanitizeHeaders(result.headers()));
         return result;
     }
 
@@ -49,5 +58,21 @@ public record WachterClient(RestClient restClient, WachterRequestFactory request
         } catch (IllegalArgumentException ex) {
             return HttpMethod.POST;
         }
+    }
+
+    private HttpHeaders sanitizeHeaders(HttpHeaders headers) {
+        var sanitized = new HttpHeaders();
+        headers.forEach((name, values) -> {
+            if (isSensitive(name)) {
+                sanitized.put(name, java.util.List.of("***"));
+            } else {
+                sanitized.put(name, new ArrayList<>(values));
+            }
+        });
+        return sanitized;
+    }
+
+    private boolean isSensitive(String headerName) {
+        return headerName != null && SENSITIVE_HEADERS.contains(headerName.toLowerCase(Locale.ROOT));
     }
 }
