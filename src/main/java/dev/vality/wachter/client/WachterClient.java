@@ -17,9 +17,10 @@ public record WachterClient(RestClient restClient, WachterRequestFactory request
     public WachterClientResponse send(HttpServletRequest servletRequest, byte[] contentData, String url) {
         var httpMethod = resolveMethod(servletRequest);
         var params = requestFactory.extract(servletRequest);
-        log.info("-> Send request to {} {} | params: {}", httpMethod, url, params);
 
         var headers = requestFactory.buildHeaders(servletRequest);
+
+        log.info("-> Send request to {} {} | params: {}, headers: {}", httpMethod, url, params, headers);
 
         var requestSpec = restClient.method(httpMethod)
                 .uri(url)
