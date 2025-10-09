@@ -42,6 +42,9 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
             var restoredTraceData = traceContextApplier.restoreTraceData(normalized);
             WFlow.create(() -> doFilter(request, response, filterChain), restoredTraceData)
                     .run();
+            log.info("<- Sent {} {} | status: {}, headers: {}",
+                    request.getMethod(), getRequestPath(request), response.getStatus(),
+                    sanitizeResponseHeaders(response));
             return;
         }
         doFilter(request, response, filterChain);
@@ -59,8 +62,8 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
     }
 
     private static HttpHeaders sanitizeHeaders(HttpServletRequest request) {
-        HttpHeaders headers = new HttpHeaders();
-        Map<String, String> collectedHeaders = collectHeaders(request);
+        var headers = new HttpHeaders();
+        var collectedHeaders = collectHeaders(request);
         collectedHeaders.forEach((name, value) -> {
             if (isSensitive(name)) {
                 headers.add(name, "***");
@@ -72,12 +75,12 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
     }
 
     private static Map<String, String> collectHeaders(HttpServletRequest request) {
-        Map<String, String> headers = new LinkedHashMap<>();
-        Enumeration<String> headerNames = request.getHeaderNames();
+        var headers = new LinkedHashMap<String, String>();
+        var headerNames = request.getHeaderNames();
         if (headerNames != null) {
             while (headerNames.hasMoreElements()) {
-                String name = headerNames.nextElement();
-                String value = request.getHeader(name);
+                var name = headerNames.nextElement();
+                var value = request.getHeader(name);
                 if (value != null) {
                     headers.put(name, value);
                 }
@@ -88,5 +91,17 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
 
     private static boolean isSensitive(String headerName) {
         return SENSITIVE_HEADERS.contains(headerName.toLowerCase(Locale.ROOT));
+    }
+
+    private static HttpHeaders sanitizeResponseHeaders(HttpServletResponse response) {
+        var headers = new HttpHeaders();
+        response.getHeaderNames().forEach(name -> {
+            if (isSensitive(name)) {
+                headers.add(name, "***");
+            } else {
+                response.getHeaders(name).forEach(value -> headers.add(name, value));
+            }
+        });
+        return headers;
     }
 }

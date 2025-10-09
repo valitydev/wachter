@@ -1,6 +1,7 @@
 package dev.vality.wachter.client;
 
 import dev.vality.wachter.config.tracing.TraceContextHeadersExtractor;
+import dev.vality.wachter.config.tracing.TraceContextHeadersNormalizer;
 import dev.vality.wachter.config.tracing.TraceContextRestorer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import java.util.Set;
 public class WachterClient {
 
     private final TraceContextHeadersExtractor traceContextHeadersExtractor = new TraceContextHeadersExtractor();
+    private final TraceContextHeadersNormalizer traceContextHeadersNormalizer = new TraceContextHeadersNormalizer();
     private final RestClient restClient;
 
     private static final byte[] EMPTY_BODY = new byte[0];
@@ -45,8 +47,7 @@ public class WachterClient {
             var status = response.getStatusCode();
             log.info("<- Receive response from {} {} | status: {}, headers: {}", httpMethod, url, status, response.getHeaders());
             var responseBody = Objects.requireNonNullElse(response.bodyTo(byte[].class), EMPTY_BODY);
-            var responseHeaders = new HttpHeaders();
-            responseHeaders.putAll(response.getHeaders());
+            var responseHeaders = traceContextHeadersNormalizer.normalizeResponseHeaders(response.getHeaders());
             return new WachterClientResponse(status, responseHeaders, responseBody);
         });
     }

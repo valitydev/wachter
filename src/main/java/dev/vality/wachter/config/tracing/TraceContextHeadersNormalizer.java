@@ -7,6 +7,7 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensi
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
@@ -30,6 +31,22 @@ public class TraceContextHeadersNormalizer {
         mergeJwtIntoHeaders(normalized);
         mergeRequestDeadline(request, normalized);
         return normalized.isEmpty() ? Map.of() : Map.copyOf(normalized);
+    }
+
+    public HttpHeaders normalizeResponseHeaders(HttpHeaders responseHeaders) {
+        final var normalized = new HttpHeaders();
+        for (var entry : responseHeaders.entrySet()) {
+            final var headerName = entry.getKey();
+            final var lowerCase = headerName.toLowerCase(Locale.ROOT);
+            if (lowerCase.startsWith(WOODY_PREFIX) || lowerCase.startsWith(X_WOODY_PREFIX)) {
+                normalizeWoodyResponseHeader(normalized, lowerCase, entry.getValue());
+            } else if (lowerCase.equals(X_REQUEST_ID.toLowerCase(Locale.ROOT))
+                    || lowerCase.equals(X_REQUEST_DEADLINE.toLowerCase(Locale.ROOT))
+                    || lowerCase.equals(OTEL_TRACE_PARENT.toLowerCase(Locale.ROOT))) {
+                normalized.addAll(headerName, entry.getValue());
+            }
+        }
+        return normalized;
     }
 
     private void normalizeWoodyHeaders(HttpServletRequest request, List<String> headerNames,
@@ -107,5 +124,21 @@ public class TraceContextHeadersNormalizer {
                     .plus(extractMinutes(requestDeadlineHeader, requestIdHeader), ChronoUnit.MILLIS);
         }
         return Instant.parse(requestDeadlineHeader);
+    }
+
+    private void normalizeWoodyResponseHeader(HttpHeaders headers,
+                                              String lowerCase,
+                                              List<String> values) {
+        if (lowerCase.startsWith(X_WOODY_PREFIX)) {
+            headers.addAll(lowerCase, values);
+        } else {
+            final var suffix = lowerCase.substring(WOODY_PREFIX.length());
+            if (suffix.startsWith(WoodySuffixes.META_USER_IDENTITY_DOT)) {
+                final var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY_DOT.length());
+                headers.addAll(X_WOODY_META_USER_IDENTITY_PREFIX + metaKey, values);
+            } else {
+                headers.addAll(X_WOODY_PREFIX + suffix, values);
+            }
+        }
     }
 }

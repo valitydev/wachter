@@ -34,7 +34,7 @@ public class WebConfig {
                 var requestPath = getRequestPath(request);
                 if ((request.getLocalPort() == serverPort) && !requestPath.equals(wachterEndpoint)) {
                     int status = HttpServletResponse.SC_NOT_FOUND;
-                    log.error("<- Sent [redirecting {}]: Unknown address {}", status, requestPath);
+                    log.warn("<- Sent [redirecting {}]: Unknown address {}", status, requestPath);
                     response.sendError(status, "Unknown address");
                     return;
                 }
