@@ -33,7 +33,7 @@ public class WebConfig {
                                             FilterChain filterChain) throws ServletException, IOException {
                 var requestPath = getRequestPath(request);
                 if ((request.getLocalPort() == serverPort) && !requestPath.equals(wachterEndpoint)) {
-                    int status = HttpServletResponse.SC_NOT_FOUND;
+                    var status = HttpServletResponse.SC_NOT_FOUND;
                     log.warn("<- Sent [redirecting {}]: Unknown address {}", status, requestPath);
                     response.sendError(status, "Unknown address");
                     return;
@@ -60,11 +60,11 @@ public class WebConfig {
     }
 
     public static String getRequestPath(HttpServletRequest request) {
-        String servletPath = request.getServletPath();
+        var servletPath = request.getServletPath();
         if (servletPath != null && !servletPath.isBlank()) {
             return servletPath;
         }
-        String requestURI = request.getRequestURI();
+        var requestURI = request.getRequestURI();
         if (requestURI != null && !requestURI.isBlank()) {
             return requestURI;
         }
