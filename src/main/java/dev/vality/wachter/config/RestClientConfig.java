@@ -2,7 +2,6 @@ package dev.vality.wachter.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.vality.wachter.config.properties.HttpProperties;
-import dev.vality.wachter.config.http.HttpHeadersPolicy;
 import lombok.RequiredArgsConstructor;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
@@ -35,7 +34,6 @@ import java.util.List;
 public class RestClientConfig {
 
     private final HttpProperties httpProperties;
-    private final HttpHeadersPolicy httpHeadersPolicy;
 
     @Bean
     public SSLContext sslContext() throws Exception {
@@ -81,9 +79,6 @@ public class RestClientConfig {
                 .setDefaultRequestConfig(requestConfig)
                 .disableRedirectHandling()
                 .disableAutomaticRetries()
-                .addRequestInterceptorLast((request, entity, context) ->
-                        httpHeadersPolicy.getOutboundSanitizedHeaders()
-                                .forEach(request::removeHeaders))
                 .setConnectionManagerShared(true)
                 .build();
     }

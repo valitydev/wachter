@@ -44,6 +44,7 @@ info:
   stage: dev
 
 wachter:
+  endpoint: ${wachter.endpoint}
   auth:
     enabled: true
   serviceHeader: Service
