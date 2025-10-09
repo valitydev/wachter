@@ -64,9 +64,9 @@ public class WebConfig {
         if (servletPath != null && !servletPath.isBlank()) {
             return servletPath;
         }
-        var requestURI = request.getRequestURI();
-        if (requestURI != null && !requestURI.isBlank()) {
-            return requestURI;
+        var requestPath = request.getRequestURI();
+        if (requestPath != null && !requestPath.isBlank()) {
+            return requestPath;
         }
         return "";
     }
