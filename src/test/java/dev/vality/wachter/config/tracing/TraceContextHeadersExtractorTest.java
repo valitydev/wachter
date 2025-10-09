@@ -1,5 +1,6 @@
 package dev.vality.wachter.config.tracing;
 
+import dev.vality.wachter.tracing.TraceContextHeadersExtractor;
 import dev.vality.woody.api.trace.TraceData;
 import dev.vality.woody.api.trace.context.TraceContext;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.Map;
 
-import static dev.vality.wachter.constants.HeadersConstants.*;
+import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 import static dev.vality.woody.api.trace.ContextUtils.setCustomMetadataValue;
 import static dev.vality.woody.api.trace.ContextUtils.setDeadline;
 import static org.junit.jupiter.api.Assertions.*;

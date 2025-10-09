@@ -1,4 +1,4 @@
-package dev.vality.wachter.config.tracing;
+package dev.vality.wachter.tracing;
 
 import dev.vality.wachter.security.JwtTokenDetailsExtractor;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static dev.vality.wachter.constants.HeadersConstants.*;
+import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 import static dev.vality.wachter.utils.DeadlineUtil.*;
 
 @Slf4j

@@ -1,7 +1,7 @@
 package dev.vality.wachter.client;
 
-import dev.vality.wachter.config.tracing.TraceContextHeadersExtractor;
-import dev.vality.wachter.config.tracing.TraceContextHeadersNormalizer;
+import dev.vality.wachter.tracing.TraceContextHeadersExtractor;
+import dev.vality.wachter.tracing.TraceContextHeadersNormalizer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

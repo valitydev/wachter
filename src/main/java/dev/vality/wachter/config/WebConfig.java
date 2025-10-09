@@ -1,6 +1,6 @@
 package dev.vality.wachter.config;
 
-import dev.vality.wachter.config.tracing.WoodyTracingFilter;
+import dev.vality.wachter.tracing.WoodyTracingFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

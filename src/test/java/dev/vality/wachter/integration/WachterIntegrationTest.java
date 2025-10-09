@@ -1,9 +1,8 @@
 package dev.vality.wachter.integration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
-import dev.vality.wachter.auth.utils.JwtTokenBuilder;
 import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
-import dev.vality.wachter.constants.HeadersConstants;
+import dev.vality.wachter.constants.TraceHeadersConstants;
 import dev.vality.wachter.testutil.TMessageUtil;
 import dev.vality.woody.api.trace.context.TraceContext;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
@@ -25,8 +24,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static dev.vality.wachter.constants.HeadersConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,13 +34,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
     private static final String USER_ID_HEADER = WOODY_META_USER_IDENTITY_PREFIX +
-            HeadersConstants.WoodySuffixes.userIdentitySuffix(UserIdentityIdExtensionKit.KEY);
+            TraceHeadersConstants.WoodySuffixes.userIdentitySuffix(UserIdentityIdExtensionKit.KEY);
     private static final String USER_NAME_HEADER = WOODY_META_USER_IDENTITY_PREFIX +
-            HeadersConstants.WoodySuffixes.userIdentitySuffix(UserIdentityUsernameExtensionKit.KEY);
+            TraceHeadersConstants.WoodySuffixes.userIdentitySuffix(UserIdentityUsernameExtensionKit.KEY);
     private static final String USER_EMAIL_HEADER = WOODY_META_USER_IDENTITY_PREFIX +
-            HeadersConstants.WoodySuffixes.userIdentitySuffix(UserIdentityEmailExtensionKit.KEY);
+            TraceHeadersConstants.WoodySuffixes.userIdentitySuffix(UserIdentityEmailExtensionKit.KEY);
     private static final String USER_REALM_HEADER = WOODY_META_USER_IDENTITY_PREFIX +
-            HeadersConstants.WoodySuffixes.userIdentitySuffix(UserIdentityRealmExtensionKit.KEY);
+            TraceHeadersConstants.WoodySuffixes.userIdentitySuffix(UserIdentityRealmExtensionKit.KEY);
     private static final String TRACEPARENT_PATTERN = "00-[0-9a-f]{32}-[0-9a-f]{16}-0[0-1]";
     private static final String EXPECTED_REALM = "/internal";
 

@@ -1,4 +1,4 @@
-package dev.vality.wachter.config.tracing;
+package dev.vality.wachter.tracing;
 
 import dev.vality.woody.api.flow.WFlow;
 import dev.vality.woody.api.trace.TraceData;
@@ -18,7 +18,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static dev.vality.wachter.constants.HeadersConstants.*;
+import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 
 @Slf4j
 @UtilityClass

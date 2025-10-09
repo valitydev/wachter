@@ -1,6 +1,6 @@
 package dev.vality.wachter.config.tracing;
 
-import dev.vality.woody.api.trace.TraceData;
+import dev.vality.wachter.tracing.WoodyTracingFilter;
 import dev.vality.woody.api.trace.context.TraceContext;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
@@ -15,7 +15,7 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import static dev.vality.wachter.constants.HeadersConstants.*;
+import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class WoodyTracingFilterTest {

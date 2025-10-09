@@ -1,6 +1,6 @@
 package dev.vality.wachter.constants;
 
-public class HeadersConstants {
+public class TraceHeadersConstants {
 
     public static final String X_REQUEST_ID = "X-Request-ID";
     public static final String X_REQUEST_DEADLINE = "X-Request-Deadline";
