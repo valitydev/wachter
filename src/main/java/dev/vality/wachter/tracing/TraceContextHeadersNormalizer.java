@@ -100,11 +100,16 @@ public class TraceContextHeadersNormalizer {
     private void mergeRequestDeadline(HttpServletRequest request, Map<String, String> headers) {
         var requestDeadlineHeader = request.getHeader(X_REQUEST_DEADLINE);
         var requestIdHeader = request.getHeader(X_REQUEST_ID);
+        if (requestIdHeader != null && !requestIdHeader.isEmpty()) {
+            headers.put(X_REQUEST_ID, requestIdHeader);
+        }
         if (requestDeadlineHeader == null) {
             return;
         }
         try {
-            headers.putIfAbsent(WOODY_DEADLINE, getInstant(requestDeadlineHeader, requestIdHeader).toString());
+            var normalizedDeadline = getInstant(requestDeadlineHeader, requestIdHeader).toString();
+            headers.putIfAbsent(WOODY_DEADLINE, normalizedDeadline);
+            headers.put(X_REQUEST_DEADLINE, normalizedDeadline);
         } catch (Exception e) {
             log.warn("Unable to parse 'X-Request-Deadline' header value '{}'", requestDeadlineHeader);
         }

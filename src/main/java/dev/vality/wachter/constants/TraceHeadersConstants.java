@@ -9,12 +9,16 @@ public class TraceHeadersConstants {
     public static final String X_WOODY_SPAN_ID = X_WOODY_PREFIX + "span-id";
     public static final String X_WOODY_PARENT_ID = X_WOODY_PREFIX + "parent-id";
     public static final String X_WOODY_DEADLINE = X_WOODY_PREFIX + "deadline";
+    public static final String X_WOODY_ERROR_CLASS = X_WOODY_PREFIX + "error-class";
+    public static final String X_WOODY_ERROR_REASON = X_WOODY_PREFIX + "error-reason";
     public static final String X_WOODY_META_USER_IDENTITY_PREFIX = X_WOODY_PREFIX + WoodySuffixes.META_USER_IDENTITY;
     public static final String WOODY_PREFIX = "woody.";
     public static final String WOODY_TRACE_ID = WOODY_PREFIX + "trace-id";
     public static final String WOODY_SPAN_ID = WOODY_PREFIX + "span-id";
     public static final String WOODY_PARENT_ID = WOODY_PREFIX + "parent-id";
     public static final String WOODY_DEADLINE = WOODY_PREFIX + "deadline";
+    public static final String WOODY_ERROR_CLASS = WOODY_PREFIX + "error-class";
+    public static final String WOODY_ERROR_REASON = WOODY_PREFIX + "error-reason";
     public static final String WOODY_META_USER_IDENTITY_PREFIX = WOODY_PREFIX + WoodySuffixes.META_USER_IDENTITY_DOT;
     public static final String OTEL_TRACE_PARENT = "traceparent";
 

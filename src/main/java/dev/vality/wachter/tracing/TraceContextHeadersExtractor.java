@@ -57,7 +57,8 @@ public class TraceContextHeadersExtractor {
             return;
         }
 
-        putMetadataValue(headers, customMetadata, WOODY_META_USER_IDENTITY_PREFIX + suffix);
+        var value = (String) customMetadata.getValue(extensionKey);
+        putIfNotNull(headers, WOODY_META_USER_IDENTITY_PREFIX + suffix, value);
     }
 
     private void putMetadataValue(Map<String, String> headers, Metadata customMetadata, String key) {
