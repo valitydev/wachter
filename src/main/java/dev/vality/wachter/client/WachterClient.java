@@ -55,19 +55,6 @@ public class WachterClient {
         });
     }
 
-    private LinkedHashMap<String, Object> getLoggedHeaders(HttpHeaders proxyHeaders,
-                                                           Map<String, String> traceHeaders) {
-        var loggedHeaders = new LinkedHashMap<String, Object>();
-        proxyHeaders.forEach((name, values) -> {
-            if (values == null || values.isEmpty()) {
-                return;
-            }
-            loggedHeaders.put(name, values.size() == 1 ? values.getFirst() : values);
-        });
-        loggedHeaders.putAll(traceHeaders);
-        return loggedHeaders;
-    }
-
     private HttpMethod resolveMethod(HttpServletRequest servletRequest) {
         try {
             return HttpMethod.valueOf(servletRequest.getMethod());
