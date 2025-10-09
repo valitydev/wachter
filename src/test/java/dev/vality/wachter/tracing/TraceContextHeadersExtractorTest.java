@@ -117,8 +117,8 @@ class TraceContextHeadersExtractorTest {
 
         final Map<String, String> headers = TraceContextHeadersExtractor.extractHeaders();
 
-        assertEquals("request-123", headers.get(X_REQUEST_ID));
-        assertEquals("2030-12-31T23:59:59Z", headers.get(X_REQUEST_DEADLINE));
+        assertEquals("request-123", headers.get(WOODY_META_REQUEST_ID));
+        assertEquals("2030-12-31T23:59:59Z", headers.get(WOODY_META_REQUEST_DEADLINE));
 
         otelSpan.end();
     }
@@ -241,8 +241,8 @@ class TraceContextHeadersExtractorTest {
         assertEquals("noreply@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
         assertEquals("noreply@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
         assertEquals("/internal", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
-        assertEquals("req-12345", headers.get(X_REQUEST_ID));
-        assertEquals("2030-01-01T00:00:00Z", headers.get(X_REQUEST_DEADLINE));
+        assertEquals("req-12345", headers.get(WOODY_META_REQUEST_ID));
+        assertEquals("2030-01-01T00:00:00Z", headers.get(WOODY_META_REQUEST_DEADLINE));
         assertNotNull(headers.get(OTEL_TRACE_PARENT));
 
         otelSpan.end();

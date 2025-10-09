@@ -46,8 +46,8 @@ public class TraceContextHeadersExtractor {
         extractUserIdentityHeader(headers, customMetadata, UserIdentityUsernameExtensionKit.KEY);
         extractUserIdentityHeader(headers, customMetadata, UserIdentityEmailExtensionKit.KEY);
         extractUserIdentityHeader(headers, customMetadata, UserIdentityRealmExtensionKit.KEY);
-        putMetadataValue(headers, customMetadata, X_REQUEST_ID);
-        putMetadataValue(headers, customMetadata, X_REQUEST_DEADLINE);
+        putMetadataValue(headers, customMetadata, X_REQUEST_ID, WOODY_META_REQUEST_ID);
+        putMetadataValue(headers, customMetadata, X_REQUEST_DEADLINE, WOODY_META_REQUEST_DEADLINE);
         return headers;
     }
 
@@ -61,9 +61,12 @@ public class TraceContextHeadersExtractor {
         putIfNotNull(headers, WOODY_META_USER_IDENTITY_PREFIX + suffix, value);
     }
 
-    private void putMetadataValue(Map<String, String> headers, Metadata customMetadata, String key) {
-        var value = (String) customMetadata.getValue(key);
-        putIfNotNull(headers, key, value);
+    private void putMetadataValue(Map<String, String> headers,
+                                  Metadata customMetadata,
+                                  String metadataKey,
+                                  String headerKey) {
+        var value = (String) customMetadata.getValue(metadataKey);
+        putIfNotNull(headers, headerKey, value);
     }
 
     private void putIfNotNull(Map<String, String> headers,

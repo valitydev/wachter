@@ -296,8 +296,9 @@ class TraceContextHeadersNormalizerTest {
         responseHeaders.add(WOODY_SPAN_ID, "resp-span");
         responseHeaders.add(X_WOODY_PARENT_ID, "resp-parent");
         responseHeaders.add(WOODY_META_USER_IDENTITY_PREFIX + "id", "resp-user");
+        responseHeaders.add(WOODY_META_USER_IDENTITY_PREFIX + "x-request-id", "resp-req");
+        responseHeaders.add(WOODY_META_USER_IDENTITY_PREFIX + "x-request-deadline", "2030-01-01T00:00:00Z");
         responseHeaders.add(OTEL_TRACE_PARENT, "00-abc-def-01");
-        responseHeaders.add(X_REQUEST_ID, "resp-req");
         responseHeaders.add(WOODY_DEADLINE, "2030-01-01T00:00:00Z");
         responseHeaders.add(WOODY_ERROR_CLASS, "resp-req");
         responseHeaders.add(WOODY_ERROR_REASON, "resp-req");
@@ -313,8 +314,11 @@ class TraceContextHeadersNormalizerTest {
         assertTrue(normalized.containsKey(X_WOODY_ERROR_CLASS));
         assertTrue(normalized.containsKey(X_WOODY_ERROR_REASON));
         assertTrue(normalized.containsKey(X_WOODY_META_USER_IDENTITY_PREFIX + "id"));
+        assertTrue(normalized.containsKey(X_WOODY_META_USER_IDENTITY_PREFIX + "x-request-id"));
+        assertTrue(normalized.containsKey(X_WOODY_META_USER_IDENTITY_PREFIX + "x-request-deadline"));
         assertTrue(normalized.containsKey(OTEL_TRACE_PARENT));
         assertTrue(normalized.containsKey(X_REQUEST_ID));
+        assertTrue(normalized.containsKey(X_REQUEST_DEADLINE));
         assertFalse(normalized.containsKey("Content-Type"));
         assertFalse(normalized.containsKey("Cache-Control"));
     }

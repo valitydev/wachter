@@ -174,8 +174,8 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         assertNotNull(upstreamRequest.getHeader(OTEL_TRACE_PARENT));
         assertTrue(upstreamRequest.getHeader(OTEL_TRACE_PARENT).matches(TRACEPARENT_PATTERN));
 
-        assertEquals(requestId, upstreamRequest.getHeader(X_REQUEST_ID));
-        assertEquals(deadline.toString(), upstreamRequest.getHeader(X_REQUEST_DEADLINE));
+        assertEquals(requestId, upstreamRequest.getHeader(WOODY_META_REQUEST_ID));
+        assertEquals(deadline.toString(), upstreamRequest.getHeader(WOODY_META_REQUEST_DEADLINE));
 
         assertFalse(upstreamRequest.containsHeader("cf-ray"));
         assertFalse(upstreamRequest.containsHeader("cdn-loop"));
@@ -259,8 +259,8 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         assertTrue(upstreamRequest.getHeader(OTEL_TRACE_PARENT).contains(otelTraceId));
 
         // Request metadata should be preserved
-        assertEquals("mixed-request-id", upstreamRequest.getHeader(X_REQUEST_ID));
-        assertEquals(deadline.toString(), upstreamRequest.getHeader(X_REQUEST_DEADLINE));
+        assertEquals("mixed-request-id", upstreamRequest.getHeader(WOODY_META_REQUEST_ID));
+        assertEquals(deadline.toString(), upstreamRequest.getHeader(WOODY_META_REQUEST_DEADLINE));
     }
 
     @Test
