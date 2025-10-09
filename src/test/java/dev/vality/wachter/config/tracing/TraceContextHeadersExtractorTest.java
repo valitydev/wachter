@@ -1,6 +1,7 @@
 package dev.vality.wachter.config.tracing;
 
 import dev.vality.wachter.tracing.TraceContextHeadersExtractor;
+import dev.vality.woody.api.flow.WFlow;
 import dev.vality.woody.api.trace.TraceData;
 import dev.vality.woody.api.trace.context.TraceContext;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
@@ -22,8 +23,6 @@ import java.time.Instant;
 import java.util.Map;
 
 import static dev.vality.wachter.constants.TraceHeadersConstants.*;
-import static dev.vality.woody.api.trace.ContextUtils.setCustomMetadataValue;
-import static dev.vality.woody.api.trace.ContextUtils.setDeadline;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TraceContextHeadersExtractorTest {
@@ -159,5 +158,113 @@ class TraceContextHeadersExtractorTest {
         assertFalse(headers.containsKey(WOODY_META_USER_IDENTITY_PREFIX + "username"));
 
         otelSpan.end();
+    }
+
+    @Test
+    void shouldExtractAllUserIdentityMetadata() {
+        final var traceData = new TraceData();
+        final var otelSpan = tracer.spanBuilder("test-span").startSpan();
+        traceData.setOtelSpan(otelSpan);
+        TraceContext.setCurrentTraceData(traceData);
+
+        final var activeSpan = traceData.getActiveSpan();
+        final var span = activeSpan.getSpan();
+        span.setTraceId("GZvsthKQAAA");
+        span.setId("GZvsthKQBBB");
+        span.setParentId("undefined");
+
+        activeSpan.getCustomMetadata().putValue(UserIdentityIdExtensionKit.KEY, "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
+        activeSpan.getCustomMetadata().putValue(UserIdentityUsernameExtensionKit.KEY, "e.cherniak@empayre.com");
+        activeSpan.getCustomMetadata().putValue(UserIdentityEmailExtensionKit.KEY, "e.cherniak@empayre.com");
+        activeSpan.getCustomMetadata().putValue(UserIdentityRealmExtensionKit.KEY, "/internal");
+
+        final Map<String, String> headers = TraceContextHeadersExtractor.extractHeaders();
+
+        assertEquals("b54a93c4-415d-4f33-a5e9-3608fd043ff4", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
+        assertEquals("e.cherniak@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
+        assertEquals("e.cherniak@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
+        assertEquals("/internal", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+
+        otelSpan.end();
+    }
+
+    @Test
+    void shouldGenerateValidTraceparent() {
+        final var traceData = new TraceData();
+        final var otelSpan = tracer.spanBuilder("test-span").startSpan();
+        traceData.setOtelSpan(otelSpan);
+        TraceContext.setCurrentTraceData(traceData);
+
+        final var span = traceData.getActiveSpan().getSpan();
+        span.setTraceId("trace-id");
+        span.setId("span-id");
+
+        final Map<String, String> headers = TraceContextHeadersExtractor.extractHeaders();
+
+        final String traceparent = headers.get(OTEL_TRACE_PARENT);
+        assertNotNull(traceparent);
+        assertTrue(traceparent.matches("00-[0-9a-f]{32}-[0-9a-f]{16}-0[0-1]"));
+
+        otelSpan.end();
+    }
+
+    @Test
+    void shouldExtractComplexScenarioWithAllHeaders() {
+        final var traceData = new TraceData();
+        TraceContext.initNewServiceTrace(traceData, WFlow.createDefaultIdGenerator(), WFlow.createDefaultIdGenerator());
+
+        final var otelSpan = tracer.spanBuilder("test-span").startSpan();
+        traceData.setOtelSpan(otelSpan);
+        TraceContext.setCurrentTraceData(traceData);
+
+        final var activeSpan = traceData.getActiveSpan();
+        final var span = activeSpan.getSpan();
+        span.setTraceId("GZyWNGugAAA");
+        span.setId("GZyWNGugBBB");
+        span.setParentId("undefined");
+        span.setDeadline(Instant.parse("2030-01-01T00:00:00Z"));
+
+        final var metadata = activeSpan.getCustomMetadata();
+        metadata.putValue(UserIdentityIdExtensionKit.KEY, "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
+        metadata.putValue(UserIdentityUsernameExtensionKit.KEY, "e.cherniak@empayre.com");
+        metadata.putValue(UserIdentityEmailExtensionKit.KEY, "e.cherniak@empayre.com");
+        metadata.putValue(UserIdentityRealmExtensionKit.KEY, "/internal");
+        metadata.putValue(X_REQUEST_ID, "req-12345");
+        metadata.putValue(X_REQUEST_DEADLINE, "2030-01-01T00:00:00Z");
+
+        final Map<String, String> headers = TraceContextHeadersExtractor.extractHeaders();
+
+        assertEquals("GZyWNGugAAA", headers.get(WOODY_TRACE_ID));
+        assertEquals("GZyWNGugBBB", headers.get(WOODY_SPAN_ID));
+        assertEquals("undefined", headers.get(WOODY_PARENT_ID));
+        assertEquals("2030-01-01T00:00:00Z", headers.get(WOODY_DEADLINE));
+        assertEquals("b54a93c4-415d-4f33-a5e9-3608fd043ff4", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
+        assertEquals("e.cherniak@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
+        assertEquals("e.cherniak@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
+        assertEquals("/internal", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+        assertEquals("req-12345", headers.get(X_REQUEST_ID));
+        assertEquals("2030-01-01T00:00:00Z", headers.get(X_REQUEST_DEADLINE));
+        assertNotNull(headers.get(OTEL_TRACE_PARENT));
+
+        otelSpan.end();
+    }
+
+    @Test
+    void shouldThrowWhenTraceDataIsNull() {
+        TraceContext.setCurrentTraceData(null);
+
+        assertThrows(NullPointerException.class, () -> {
+            TraceContextHeadersExtractor.extractHeaders();
+        });
+    }
+
+    @Test
+    void shouldThrowWhenOtelSpanIsNull() {
+        final var traceData = new TraceData();
+        TraceContext.setCurrentTraceData(traceData);
+
+        assertThrows(NullPointerException.class, () -> {
+            TraceContextHeadersExtractor.extractHeaders();
+        });
     }
 }

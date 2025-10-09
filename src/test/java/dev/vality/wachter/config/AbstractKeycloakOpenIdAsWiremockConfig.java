@@ -36,7 +36,7 @@ public abstract class AbstractKeycloakOpenIdAsWiremockConfig {
 
     protected String generateSimpleJwtWithRoles() {
         return keycloakOpenIdStub.generateJwt("Deanonimus", "unknown", "Domain", "messages:methodName",
-                "DominantCache", "!DominantCache:methodName");
+                "DominantCache", "!DominantCache:methodName", "MerchantStatistics", "PaymentAdjustment");
 
     }
 
