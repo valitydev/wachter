@@ -63,7 +63,7 @@ class WachterControllerDisabledAuthTest extends AbstractKeycloakOpenIdAsWiremock
                 .thenReturn(new WachterClientResponse(HttpStatus.OK, new HttpHeaders(), new byte[0]));
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithoutRoles())
-                        .header("Service", "messages")
+                        .header("Service", "Domain")
                         .header("X-Request-ID", randomUUID())
                         .header("X-Request-Deadline", Instant.now().plus(1, ChronoUnit.DAYS).toString())
                         .content(TMessageUtil.createTMessage(protocolFactory)))
