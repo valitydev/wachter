@@ -31,12 +31,10 @@ public class WachterClient {
 
     public WachterClientResponse send(HttpServletRequest servletRequest, byte[] contentData, String url) {
         var httpMethod = resolveMethod(servletRequest);
-        var params = requestFactory.extract(servletRequest);
 
         var headers = requestFactory.buildHeaders(servletRequest);
 
-        log.info("-> Send request to {} {} | params: {} | headers: {}",
-                httpMethod, url, params, sanitizeHeaders(headers));
+        log.info("-> Send request to {} {}", httpMethod, url);
 
         var requestSpec = restClient.method(httpMethod)
                 .uri(url)
@@ -48,14 +46,13 @@ public class WachterClient {
 
         var result = requestSpec.exchange((request, response) -> {
             var status = response.getStatusCode();
+            log.info("<- Receive response from {} {} | status: {}", httpMethod, url, status);
             var responseBody = Objects.requireNonNullElse(response.bodyTo(byte[].class), EMPTY_BODY);
             var responseHeaders = new HttpHeaders();
             responseHeaders.putAll(response.getHeaders());
             return new WachterClientResponse(status, responseHeaders, responseBody);
         });
 
-        log.info("<- Receive response from {} {} | status: {} | params: {} | headers: {}",
-                httpMethod, url, result.statusCode(), params, sanitizeHeaders(result.headers()));
         return result;
     }
 

@@ -17,7 +17,7 @@ import static dev.vality.wachter.constants.HeadersConstants.*;
 import static dev.vality.wachter.utils.DeadlineUtil.*;
 
 @Slf4j
-public class WoodyHeadersNormalizer {
+public class TraceContextHeadersNormalizer {
 
     public Map<String, String> normalize(HttpServletRequest request) {
         var normalized = new HashMap<String, String>();

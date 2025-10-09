@@ -42,8 +42,4 @@ public class HttpHeadersPolicy {
     public Set<String> getOutboundSanitizedHeaders() {
         return OUTBOUND_SANITIZED_HEADERS;
     }
-
-    public List<String> getCorsAllowedHeaders() {
-        return Collections.singletonList("*");
-    }
 }

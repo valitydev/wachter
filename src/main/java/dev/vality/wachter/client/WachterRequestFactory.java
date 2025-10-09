@@ -51,12 +51,6 @@ public class WachterRequestFactory {
         return httpHeaders;
     }
 
-    public String extract(HttpServletRequest servletRequest) {
-        return servletRequest.getParameterMap().entrySet().stream()
-                .map(entry -> entry.getKey() + "=" + String.join(", ", entry.getValue()))
-                .collect(Collectors.joining(", "));
-    }
-
     private Map<String, String> collectHeaders(HttpServletRequest servletRequest) {
         var headers = new LinkedHashMap<String, String>();
         var headerNames = servletRequest.getHeaderNames();
