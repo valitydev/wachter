@@ -36,6 +36,12 @@ public class TraceContextRestorer {
         setIfPresent(headers, WOODY_SPAN_ID, serviceSpan::setId);
         setIfPresent(headers, WOODY_PARENT_ID, serviceSpan::setParentId);
         setIfPresent(headers, WOODY_DEADLINE, value -> serviceSpan.setDeadline(Instant.parse(value)));
+        setIfPresent(headers, OTEL_TRACE_PARENT, value -> {
+            var otelSpan = initSpan(value);
+            otelSpan.makeCurrent();
+            traceData.setOtelSpan(otelSpan);
+        });
+
         var customMetadata = traceData.getActiveSpan().getCustomMetadata();
         applyUserIdentityHeader(headers, UserIdentityIdExtensionKit.KEY,
                 value -> customMetadata.putValue(UserIdentityIdExtensionKit.KEY, value));
@@ -45,11 +51,6 @@ public class TraceContextRestorer {
                 value -> customMetadata.putValue(UserIdentityEmailExtensionKit.KEY, value));
         applyUserIdentityHeader(headers, UserIdentityRealmExtensionKit.KEY,
                 value -> customMetadata.putValue(UserIdentityRealmExtensionKit.KEY, value));
-        setIfPresent(headers, OTEL_TRACE_PARENT, value -> {
-            var otelSpan = initSpan(value);
-            otelSpan.makeCurrent();
-            traceData.setOtelSpan(otelSpan);
-        });
         setIfPresent(headers, X_REQUEST_ID, value -> customMetadata.putValue(X_REQUEST_ID, value));
         setIfPresent(headers, X_REQUEST_DEADLINE, value -> customMetadata.putValue(X_REQUEST_DEADLINE, value));
         return traceData;

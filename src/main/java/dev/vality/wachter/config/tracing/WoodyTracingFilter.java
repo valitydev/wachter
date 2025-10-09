@@ -36,11 +36,12 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) {
         var requestPath = getRequestPath(request);
         if ((request.getLocalPort() == serverPort) && requestPath.equals(wachterEndpoint)) {
-            var normalizedWoodyHeaders = traceContextHeadersNormalizer.normalize(request);
+            var normalized = traceContextHeadersNormalizer.normalize(request);
             log.info("-> Received {} {} | params: {}, headers: {}",
                     request.getMethod(), getRequestPath(request), extractParams(request), sanitizeHeaders(request));
-            var restoredTraceData = traceContextApplier.restoreTraceData(normalizedWoodyHeaders);
-            WFlow.create(() -> doFilter(request, response, filterChain), restoredTraceData).run();
+            var restoredTraceData = traceContextApplier.restoreTraceData(normalized);
+            WFlow.create(() -> doFilter(request, response, filterChain), restoredTraceData)
+                    .run();
             return;
         }
         doFilter(request, response, filterChain);

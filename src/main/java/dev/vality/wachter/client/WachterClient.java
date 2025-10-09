@@ -1,5 +1,7 @@
 package dev.vality.wachter.client;
 
+import dev.vality.wachter.config.tracing.TraceContextHeadersExtractor;
+import dev.vality.wachter.config.tracing.TraceContextRestorer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,41 +21,34 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class WachterClient {
 
+    private final TraceContextHeadersExtractor traceContextHeadersExtractor = new TraceContextHeadersExtractor();
     private final RestClient restClient;
-    private final WachterRequestFactory requestFactory;
 
     private static final byte[] EMPTY_BODY = new byte[0];
-    private static final Set<String> SENSITIVE_HEADERS = Set.of(
-            HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT),
-            HttpHeaders.COOKIE.toLowerCase(Locale.ROOT),
-            HttpHeaders.SET_COOKIE.toLowerCase(Locale.ROOT)
-    );
 
     public WachterClientResponse send(HttpServletRequest servletRequest, byte[] contentData, String url) {
         var httpMethod = resolveMethod(servletRequest);
 
-        var headers = requestFactory.buildHeaders(servletRequest);
+        var headers = traceContextHeadersExtractor.extractHeaders();
 
-        log.info("-> Send request to {} {}", httpMethod, url);
+        log.info("-> Send request to {} {} | headers: {}", httpMethod, url, headers);
 
         var requestSpec = restClient.method(httpMethod)
                 .uri(url)
-                .headers(httpHeaders -> httpHeaders.addAll(headers));
+                .headers(httpHeaders -> headers.forEach(httpHeaders::set));
 
         if (!ObjectUtils.isEmpty(contentData)) {
             requestSpec = requestSpec.body(contentData);
         }
 
-        var result = requestSpec.exchange((request, response) -> {
+        return requestSpec.exchange((request, response) -> {
             var status = response.getStatusCode();
-            log.info("<- Receive response from {} {} | status: {}", httpMethod, url, status);
+            log.info("<- Receive response from {} {} | status: {}, headers: {}", httpMethod, url, status, response.getHeaders());
             var responseBody = Objects.requireNonNullElse(response.bodyTo(byte[].class), EMPTY_BODY);
             var responseHeaders = new HttpHeaders();
             responseHeaders.putAll(response.getHeaders());
             return new WachterClientResponse(status, responseHeaders, responseBody);
         });
-
-        return result;
     }
 
     private HttpMethod resolveMethod(HttpServletRequest servletRequest) {
@@ -62,21 +57,5 @@ public class WachterClient {
         } catch (IllegalArgumentException ex) {
             return HttpMethod.POST;
         }
-    }
-
-    private HttpHeaders sanitizeHeaders(HttpHeaders headers) {
-        var sanitized = new HttpHeaders();
-        headers.forEach((name, values) -> {
-            if (isSensitive(name)) {
-                sanitized.put(name, java.util.List.of("***"));
-            } else {
-                sanitized.put(name, new ArrayList<>(values));
-            }
-        });
-        return sanitized;
-    }
-
-    private boolean isSensitive(String headerName) {
-        return headerName != null && SENSITIVE_HEADERS.contains(headerName.toLowerCase(Locale.ROOT));
     }
 }

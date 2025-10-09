@@ -24,9 +24,6 @@ public class WachterController {
 
     @PostMapping("/wachter")
     public ResponseEntity<byte[]> proxyRequest(HttpServletRequest request) {
-        var xRequestDeadline = request.getHeader(X_REQUEST_DEADLINE);
-        var xRequestId = request.getHeader(X_REQUEST_ID);
-        DeadlineUtil.checkDeadline(xRequestDeadline, xRequestId);
         var upstreamResponse = wachterService.process(request);
         var responseHeaders = new HttpHeaders();
         responseHeaders.putAll(upstreamResponse.headers());
