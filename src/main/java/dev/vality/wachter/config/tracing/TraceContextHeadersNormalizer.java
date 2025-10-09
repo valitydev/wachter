@@ -34,10 +34,10 @@ public class TraceContextHeadersNormalizer {
     }
 
     public HttpHeaders normalizeResponseHeaders(HttpHeaders responseHeaders) {
-        final var normalized = new HttpHeaders();
+        var normalized = new HttpHeaders();
         for (var entry : responseHeaders.entrySet()) {
-            final var headerName = entry.getKey();
-            final var lowerCase = headerName.toLowerCase(Locale.ROOT);
+            var headerName = entry.getKey();
+            var lowerCase = headerName.toLowerCase(Locale.ROOT);
             if (lowerCase.startsWith(WOODY_PREFIX) || lowerCase.startsWith(X_WOODY_PREFIX)) {
                 normalizeWoodyResponseHeader(normalized, lowerCase, entry.getValue());
             } else if (lowerCase.equals(X_REQUEST_ID.toLowerCase(Locale.ROOT))
@@ -132,9 +132,9 @@ public class TraceContextHeadersNormalizer {
         if (lowerCase.startsWith(X_WOODY_PREFIX)) {
             headers.addAll(lowerCase, values);
         } else {
-            final var suffix = lowerCase.substring(WOODY_PREFIX.length());
+            var suffix = lowerCase.substring(WOODY_PREFIX.length());
             if (suffix.startsWith(WoodySuffixes.META_USER_IDENTITY_DOT)) {
-                final var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY_DOT.length());
+                var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY_DOT.length());
                 headers.addAll(X_WOODY_META_USER_IDENTITY_PREFIX + metaKey, values);
             } else {
                 headers.addAll(X_WOODY_PREFIX + suffix, values);
