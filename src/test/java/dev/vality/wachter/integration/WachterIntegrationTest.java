@@ -108,10 +108,10 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                     headers.set("cf-visitor", "{\"scheme\":\"https\"}");
                     headers.set("cf-warp-tag-id", "ef03c554-2080-404d-bd10-1928b8a59810");
                     headers.set("dnt", "1");
-                    headers.set("origin", "https://iddqd.empayre.com");
+                    headers.set("origin", "https://iddqd.valitydev.com");
                     headers.set("pragma", "no-cache");
                     headers.set("priority", "u=4");
-                    headers.set("referer", "https://iddqd.empayre.com/");
+                    headers.set("referer", "https://iddqd.valitydev.com/");
                     headers.set("sec-fetch-dest", "empty");
                     headers.set("sec-fetch-mode", "cors");
                     headers.set("sec-fetch-site", "same-site");
@@ -127,8 +127,8 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                     headers.set(X_WOODY_SPAN_ID, spanId);
                     headers.set(X_WOODY_PARENT_ID, parentId);
                     headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "id", "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
-                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "username", "noreply@empayre.com");
-                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "email", "noreply@empayre.com");
+                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "username", "noreply@valitydev.com");
+                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "email", "noreply@valitydev.com");
                     headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "realm", "internal");
 
                     // Request metadata

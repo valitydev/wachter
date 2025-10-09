@@ -74,16 +74,16 @@ class TraceContextRestorerTest {
         var headers = new HashMap<String, String>();
         headers.put(WOODY_TRACE_ID, "trace-123");
         headers.put(WOODY_META_USER_IDENTITY_PREFIX + "id", "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
-        headers.put(WOODY_META_USER_IDENTITY_PREFIX + "username", "noreply@empayre.com");
-        headers.put(WOODY_META_USER_IDENTITY_PREFIX + "email", "noreply@empayre.com");
+        headers.put(WOODY_META_USER_IDENTITY_PREFIX + "username", "noreply@valitydev.com");
+        headers.put(WOODY_META_USER_IDENTITY_PREFIX + "email", "noreply@valitydev.com");
         headers.put(WOODY_META_USER_IDENTITY_PREFIX + "realm", "/internal");
 
         TraceData traceData = TraceContextRestorer.restoreTraceData(headers);
 
         var metadata = traceData.getActiveSpan().getCustomMetadata();
         assertEquals("b54a93c4-415d-4f33-a5e9-3608fd043ff4", metadata.getValue(UserIdentityIdExtensionKit.KEY));
-        assertEquals("noreply@empayre.com", metadata.getValue(UserIdentityUsernameExtensionKit.KEY));
-        assertEquals("noreply@empayre.com", metadata.getValue(UserIdentityEmailExtensionKit.KEY));
+        assertEquals("noreply@valitydev.com", metadata.getValue(UserIdentityUsernameExtensionKit.KEY));
+        assertEquals("noreply@valitydev.com", metadata.getValue(UserIdentityEmailExtensionKit.KEY));
         assertEquals("/internal", metadata.getValue(UserIdentityRealmExtensionKit.KEY));
         assertNotNull(traceData.getServiceSpan().getSpan().getTraceId());
         assertNotNull(traceData.getServiceSpan().getSpan().getId());

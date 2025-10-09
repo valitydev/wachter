@@ -173,15 +173,15 @@ class TraceContextHeadersExtractorTest {
         span.setParentId("undefined");
 
         activeSpan.getCustomMetadata().putValue(UserIdentityIdExtensionKit.KEY, "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
-        activeSpan.getCustomMetadata().putValue(UserIdentityUsernameExtensionKit.KEY, "noreply@empayre.com");
-        activeSpan.getCustomMetadata().putValue(UserIdentityEmailExtensionKit.KEY, "noreply@empayre.com");
+        activeSpan.getCustomMetadata().putValue(UserIdentityUsernameExtensionKit.KEY, "noreply@valitydev.com");
+        activeSpan.getCustomMetadata().putValue(UserIdentityEmailExtensionKit.KEY, "noreply@valitydev.com");
         activeSpan.getCustomMetadata().putValue(UserIdentityRealmExtensionKit.KEY, "/internal");
 
         final Map<String, String> headers = TraceContextHeadersExtractor.extractHeaders();
 
         assertEquals("b54a93c4-415d-4f33-a5e9-3608fd043ff4", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
-        assertEquals("noreply@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
-        assertEquals("noreply@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
+        assertEquals("noreply@valitydev.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
+        assertEquals("noreply@valitydev.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
         assertEquals("/internal", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
 
         otelSpan.end();
@@ -225,8 +225,8 @@ class TraceContextHeadersExtractorTest {
 
         final var metadata = activeSpan.getCustomMetadata();
         metadata.putValue(UserIdentityIdExtensionKit.KEY, "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
-        metadata.putValue(UserIdentityUsernameExtensionKit.KEY, "noreply@empayre.com");
-        metadata.putValue(UserIdentityEmailExtensionKit.KEY, "noreply@empayre.com");
+        metadata.putValue(UserIdentityUsernameExtensionKit.KEY, "noreply@valitydev.com");
+        metadata.putValue(UserIdentityEmailExtensionKit.KEY, "noreply@valitydev.com");
         metadata.putValue(UserIdentityRealmExtensionKit.KEY, "/internal");
         metadata.putValue(X_REQUEST_ID, "req-12345");
         metadata.putValue(X_REQUEST_DEADLINE, "2030-01-01T00:00:00Z");
@@ -238,8 +238,8 @@ class TraceContextHeadersExtractorTest {
         assertEquals("undefined", headers.get(WOODY_PARENT_ID));
         assertEquals("2030-01-01T00:00:00Z", headers.get(WOODY_DEADLINE));
         assertEquals("b54a93c4-415d-4f33-a5e9-3608fd043ff4", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
-        assertEquals("noreply@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
-        assertEquals("noreply@empayre.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
+        assertEquals("noreply@valitydev.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
+        assertEquals("noreply@valitydev.com", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
         assertEquals("/internal", headers.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
         assertEquals("req-12345", headers.get(WOODY_META_REQUEST_ID));
         assertEquals("2030-01-01T00:00:00Z", headers.get(WOODY_META_REQUEST_DEADLINE));

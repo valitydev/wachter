@@ -252,7 +252,7 @@ class TraceContextHeadersNormalizerTest {
         when(request.getHeader(WOODY_TRACE_ID)).thenReturn("GZyWNGugAAA");
         when(request.getHeader(X_WOODY_SPAN_ID)).thenReturn("GZyWNGugBBB");
         when(request.getHeader(X_WOODY_PARENT_ID)).thenReturn("undefined");
-        when(request.getHeader(X_WOODY_META_USER_IDENTITY_PREFIX + "email")).thenReturn("noreply@empayre.com");
+        when(request.getHeader(X_WOODY_META_USER_IDENTITY_PREFIX + "email")).thenReturn("noreply@valitydev.com");
         when(request.getHeader(OTEL_TRACE_PARENT)).thenReturn(
                 "00-cfa3d3072a4e3e99fc14829a65311819-6e4609576fa4d077-01");
         when(request.getHeader(X_REQUEST_ID)).thenReturn("req-complex");
@@ -264,8 +264,8 @@ class TraceContextHeadersNormalizerTest {
         try (MockedStatic<JwtTokenDetailsExtractor> extractor = mockStatic(JwtTokenDetailsExtractor.class)) {
             var tokenDetails = new JwtTokenDetails(
                     "b54a93c4-415d-4f33-a5e9-3608fd043ff4",
-                    "noreply@empayre.com",
-                    "noreply@empayre.com",
+                    "noreply@valitydev.com",
+                    "noreply@valitydev.com",
                     "/internal",
                     List.of("ROLE_USER")
             );
@@ -277,10 +277,10 @@ class TraceContextHeadersNormalizerTest {
             assertEquals("GZyWNGugAAA", normalized.get(WOODY_TRACE_ID));
             assertEquals("GZyWNGugBBB", normalized.get(WOODY_SPAN_ID));
             assertEquals("undefined", normalized.get(WOODY_PARENT_ID));
-            assertEquals("noreply@empayre.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
+            assertEquals("noreply@valitydev.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
             assertEquals("b54a93c4-415d-4f33-a5e9-3608fd043ff4",
                     normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
-            assertEquals("noreply@empayre.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
+            assertEquals("noreply@valitydev.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
             assertEquals("/internal", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
             assertEquals("00-cfa3d3072a4e3e99fc14829a65311819-6e4609576fa4d077-01", normalized.get(OTEL_TRACE_PARENT));
             assertEquals("2030-01-01T00:00:00Z", normalized.get(WOODY_DEADLINE));
