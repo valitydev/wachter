@@ -5,12 +5,16 @@ import dev.vality.wachter.tracing.TraceContextHeadersNormalizer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestClient;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 @Slf4j
 @Component
@@ -24,13 +28,18 @@ public class WachterClient {
     public WachterClientResponse send(HttpServletRequest servletRequest, byte[] contentData, String url) {
         var httpMethod = resolveMethod(servletRequest);
 
-        var headers = TraceContextHeadersExtractor.extractHeaders();
+        var proxyHeaders = ProxyHeadersExtractor.extractHeaders(servletRequest);
+        var traceHeaders = TraceContextHeadersExtractor.extractHeaders();
 
-        log.info("-> Send request to {} {} | headers: {}", httpMethod, url, headers);
+        var httpHeaders = new HttpHeaders();
+        proxyHeaders.forEach(httpHeaders::addAll);
+        traceHeaders.forEach(httpHeaders::set);
+
+        log.info("-> Send request to {} {} | headers: {}", httpMethod, url, httpHeaders);
 
         var requestSpec = restClient.method(httpMethod)
                 .uri(url)
-                .headers(httpHeaders -> headers.forEach(httpHeaders::set));
+                .headers(h -> h.addAll(httpHeaders));
 
         if (!ObjectUtils.isEmpty(contentData)) {
             requestSpec = requestSpec.body(contentData);
@@ -44,6 +53,19 @@ public class WachterClient {
             var responseHeaders = TraceContextHeadersNormalizer.normalizeResponseHeaders(response.getHeaders());
             return new WachterClientResponse(status, responseHeaders, responseBody);
         });
+    }
+
+    private LinkedHashMap<String, Object> getLoggedHeaders(HttpHeaders proxyHeaders,
+                                                           Map<String, String> traceHeaders) {
+        var loggedHeaders = new LinkedHashMap<String, Object>();
+        proxyHeaders.forEach((name, values) -> {
+            if (values == null || values.isEmpty()) {
+                return;
+            }
+            loggedHeaders.put(name, values.size() == 1 ? values.getFirst() : values);
+        });
+        loggedHeaders.putAll(traceHeaders);
+        return loggedHeaders;
     }
 
     private HttpMethod resolveMethod(HttpServletRequest servletRequest) {

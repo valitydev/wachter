@@ -83,10 +83,10 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .withRequestBody(binaryEqualTo(payload))
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.OK.value())
-                        .withHeader("woody.trace-id", traceId)
-                        .withHeader("woody.parent-id", parentId)
-                        .withHeader("woody.span-id", spanId)
-                        .withHeader("traceparent", upstreamTraceparent)
+                        .withHeader(WOODY_TRACE_ID, traceId)
+                        .withHeader(WOODY_PARENT_ID, parentId)
+                        .withHeader(WOODY_SPAN_ID, spanId)
+                        .withHeader(OTEL_TRACE_PARENT, upstreamTraceparent)
                         .withHeader(HttpHeaders.CONTENT_TYPE, "application/x-thrift")
                         .withBody(responseBody)));
 
@@ -123,25 +123,25 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                     headers.set("Service", "Deanonimus");
 
                     // Woody tracing headers
-                    headers.set("x-woody-trace-id", traceId);
-                    headers.set("x-woody-span-id", spanId);
-                    headers.set("x-woody-parent-id", parentId);
-                    headers.set("x-woody-meta-user-identity-id", "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
-                    headers.set("x-woody-meta-user-identity-username", "noreply@empayre.com");
-                    headers.set("x-woody-meta-user-identity-email", "noreply@empayre.com");
-                    headers.set("x-woody-meta-user-identity-realm", "internal");
+                    headers.set(X_WOODY_TRACE_ID, traceId);
+                    headers.set(X_WOODY_SPAN_ID, spanId);
+                    headers.set(X_WOODY_PARENT_ID, parentId);
+                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "id", "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
+                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "username", "noreply@empayre.com");
+                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "email", "noreply@empayre.com");
+                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "realm", "internal");
 
                     // Request metadata
                     headers.set(X_REQUEST_ID, requestId);
                     headers.set(X_REQUEST_DEADLINE, deadline.toString());
-                    headers.set("traceparent", upstreamTraceparent);
+                    headers.set(OTEL_TRACE_PARENT, upstreamTraceparent);
                 })
                 .body(payload)
                 .retrieve()
                 .toEntity(byte[].class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(upstreamTraceparent, response.getHeaders().getFirst("traceparent"));
+        assertEquals(upstreamTraceparent, response.getHeaders().getFirst(OTEL_TRACE_PARENT));
         assertArrayEquals(responseBody, response.getBody());
 
         List<LoggedRequest> requests = findAll(postRequestedFor(urlEqualTo("/deanonimus")));
@@ -152,6 +152,14 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         assertEquals(spanId, upstreamRequest.getHeader(WOODY_SPAN_ID));
         assertEquals(parentId, upstreamRequest.getHeader(WOODY_PARENT_ID));
         assertTrue(upstreamRequest.containsHeader(WOODY_DEADLINE));
+
+        assertEquals("application/x-thrift", upstreamRequest.getHeader(HttpHeaders.CONTENT_TYPE));
+        assertEquals("application/x-thrift", upstreamRequest.getHeader(HttpHeaders.ACCEPT));
+        assertEquals("gzip, br", upstreamRequest.getHeader(HttpHeaders.ACCEPT_ENCODING));
+        assertEquals("ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+                upstreamRequest.getHeader(HttpHeaders.ACCEPT_LANGUAGE));
+        assertEquals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0",
+                upstreamRequest.getHeader(HttpHeaders.USER_AGENT));
 
         var jwtClaims = decodeJwtPayload(jwt);
         assertEquals(jwtClaims.get("sub").asText(),
@@ -204,21 +212,21 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                     headers.set("Service", "MerchantStatistics");
 
                     // Mixed woody and x-woody headers
-                    headers.set("woody.trace-id", "GZvsthKQAAA");
-                    headers.set("x-woody-span-id", "GZvsthKQBBB");
-                    headers.set("woody.parent-id", "parent-woody");
-                    headers.set("x-woody-deadline", deadline.toString());
+                    headers.set(WOODY_TRACE_ID, "GZvsthKQAAA");
+                    headers.set(X_WOODY_SPAN_ID, "GZvsthKQBBB");
+                    headers.set(WOODY_PARENT_ID, "parent-woody");
+                    headers.set(X_WOODY_DEADLINE, deadline.toString());
 
                     // User identity in different formats
-                    headers.set("woody.meta.user-identity.realm", "/woody-realm");
-                    headers.set("x-woody-meta-user-identity-id", "header-user-id");
+                    headers.set(WOODY_META_USER_IDENTITY_PREFIX + "realm", "/woody-realm");
+                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "id", "header-user-id");
 
                     // Request metadata
                     headers.set(X_REQUEST_ID, "mixed-request-id");
                     headers.set(X_REQUEST_DEADLINE, deadline.toString());
 
                     // Traceparent
-                    headers.set("traceparent", "00-" + otelTraceId + "-9cfa814ae977266e-01");
+                    headers.set(OTEL_TRACE_PARENT, "00-" + otelTraceId + "-9cfa814ae977266e-01");
                 })
                 .body(payload)
                 .retrieve()
