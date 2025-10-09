@@ -2,20 +2,15 @@ package dev.vality.wachter.client;
 
 import dev.vality.wachter.config.tracing.TraceContextHeadersExtractor;
 import dev.vality.wachter.config.tracing.TraceContextHeadersNormalizer;
-import dev.vality.wachter.config.tracing.TraceContextRestorer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestClient;
 
-import java.util.ArrayList;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
 
 @Slf4j
 @Component
@@ -45,7 +40,8 @@ public class WachterClient {
 
         return requestSpec.exchange((request, response) -> {
             var status = response.getStatusCode();
-            log.info("<- Receive response from {} {} | status: {}, headers: {}", httpMethod, url, status, response.getHeaders());
+            log.info("<- Receive response from {} {} | status: {}, headers: {}", httpMethod, url, status,
+                    response.getHeaders());
             var responseBody = Objects.requireNonNullElse(response.bodyTo(byte[].class), EMPTY_BODY);
             var responseHeaders = traceContextHeadersNormalizer.normalizeResponseHeaders(response.getHeaders());
             return new WachterClientResponse(status, responseHeaders, responseBody);

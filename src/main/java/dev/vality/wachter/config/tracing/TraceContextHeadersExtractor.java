@@ -8,7 +8,6 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensi
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
 import dev.vality.woody.thrift.impl.http.TraceParentUtils;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
