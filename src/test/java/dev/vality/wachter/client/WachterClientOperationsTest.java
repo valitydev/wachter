@@ -1,7 +1,15 @@
 package dev.vality.wachter.client;
 
-import dev.vality.wachter.constants.RequestAttributeNames;
-import dev.vality.wachter.config.http.HttpHeadersPolicy;
+import dev.vality.woody.api.trace.TraceData;
+import dev.vality.woody.api.trace.context.TraceContext;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -11,10 +19,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
-import java.util.Map;
-
 import static dev.vality.wachter.constants.HeadersConstants.WOODY_TRACE_ID;
-import static dev.vality.wachter.constants.HeadersConstants.X_WOODY_TRACE_ID;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
@@ -23,38 +28,63 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class WachterClientOperationsTest {
 
+    private SdkTracerProvider tracerProvider;
+    private Tracer tracer;
+
+    @BeforeEach
+    void setUp() {
+        GlobalOpenTelemetry.resetForTest();
+        tracerProvider = SdkTracerProvider.builder().build();
+        final var openTelemetry = OpenTelemetrySdk.builder()
+                .setTracerProvider(tracerProvider)
+                .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+                .build();
+        GlobalOpenTelemetry.set(openTelemetry);
+        tracer = openTelemetry.getTracer("test");
+    }
+
+    @AfterEach
+    void tearDown() {
+        TraceContext.setCurrentTraceData(null);
+        GlobalOpenTelemetry.resetForTest();
+        if (tracerProvider != null) {
+            tracerProvider.close();
+        }
+    }
+
     @Test
-    void shouldSendRequestWithMergedHeaders() {
+    void shouldSendRequestWithTracingHeaders() {
         final var builder = RestClient.builder();
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
 
+        final var traceData = new TraceData();
+        final var otelSpan = tracer.spanBuilder("test-span").startSpan();
+        traceData.setOtelSpan(otelSpan);
+        TraceContext.setCurrentTraceData(traceData);
+
+        final var serviceSpan = traceData.getServiceSpan().getSpan();
+        serviceSpan.setTraceId("test-trace-id");
+        serviceSpan.setId("test-span-id");
+
         final var servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("POST");
-        servletRequest.addHeader("X-Custom", "custom-value");
-        servletRequest.setAttribute(RequestAttributeNames.NORMALIZED_WOODY_HEADERS,
-                Map.of(WOODY_TRACE_ID, "normalized-trace"));
         final var payload = "payload".getBytes();
         final var expectedResponse = "response".getBytes();
 
         server.expect(requestTo("http://upstream"))
                 .andExpect(method(HttpMethod.POST))
-                .andExpect(header("X-Custom", "custom-value"))
-                .andExpect(header(WOODY_TRACE_ID, "normalized-trace"))
-                .andExpect(header(X_WOODY_TRACE_ID, "normalized-trace"))
                 .andExpect(content().bytes(payload))
                 .andRespond(withSuccess(expectedResponse, MediaType.APPLICATION_OCTET_STREAM));
 
-        final var factory = new WachterRequestFactory(new HttpHeadersPolicy());
-        final var client = new WachterClient(restClient, factory);
+        final var client = new WachterClient(restClient);
 
         final var actualResponse = client.send(servletRequest, payload, "http://upstream");
 
         assertEquals(HttpStatus.OK, actualResponse.statusCode());
-        assertEquals(MediaType.APPLICATION_OCTET_STREAM_VALUE,
-                actualResponse.headers().getFirst(HttpHeaders.CONTENT_TYPE));
         assertArrayEquals(expectedResponse, actualResponse.body());
         server.verify();
+        otelSpan.end();
     }
 
     @Test
@@ -63,25 +93,29 @@ class WachterClientOperationsTest {
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
 
+        final var traceData = new TraceData();
+        final var otelSpan = tracer.spanBuilder("test-span").startSpan();
+        traceData.setOtelSpan(otelSpan);
+        TraceContext.setCurrentTraceData(traceData);
+
+        final var serviceSpan = traceData.getServiceSpan().getSpan();
+        serviceSpan.setTraceId("get-trace-id");
+
         final var servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("GET");
-        servletRequest.addHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
-        servletRequest.setAttribute(RequestAttributeNames.NORMALIZED_WOODY_HEADERS, Map.of());
 
         server.expect(requestTo("http://upstream/resource"))
                 .andExpect(method(HttpMethod.GET))
-                .andExpect(header("Accept", MediaType.APPLICATION_JSON_VALUE))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        final var factory = new WachterRequestFactory(new HttpHeadersPolicy());
-        final var client = new WachterClient(restClient, factory);
+        final var client = new WachterClient(restClient);
 
         final var response = client.send(servletRequest, null, "http://upstream/resource");
 
         assertEquals(HttpStatus.OK, response.statusCode());
-        assertEquals(MediaType.APPLICATION_JSON_VALUE, response.headers().getFirst(HttpHeaders.CONTENT_TYPE));
         assertArrayEquals("{}".getBytes(), response.body());
         server.verify();
+        otelSpan.end();
     }
 
     @Test
@@ -90,9 +124,16 @@ class WachterClientOperationsTest {
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
 
+        final var traceData = new TraceData();
+        final var otelSpan = tracer.spanBuilder("test-span").startSpan();
+        traceData.setOtelSpan(otelSpan);
+        TraceContext.setCurrentTraceData(traceData);
+
+        final var serviceSpan = traceData.getServiceSpan().getSpan();
+        serviceSpan.setTraceId("error-trace-id");
+
         final var servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("POST");
-        servletRequest.setAttribute(RequestAttributeNames.NORMALIZED_WOODY_HEADERS, Map.of());
         final var payload = "payload".getBytes();
 
         server.expect(requestTo("http://upstream/fail"))
@@ -101,14 +142,13 @@ class WachterClientOperationsTest {
                         .body("bad-gateway")
                         .contentType(MediaType.TEXT_PLAIN));
 
-        final var factory = new WachterRequestFactory(new HttpHeadersPolicy());
-        final var client = new WachterClient(restClient, factory);
+        final var client = new WachterClient(restClient);
 
         final var response = client.send(servletRequest, payload, "http://upstream/fail");
 
         assertEquals(HttpStatus.BAD_GATEWAY, response.statusCode());
-        assertEquals(MediaType.TEXT_PLAIN_VALUE, response.headers().getFirst(HttpHeaders.CONTENT_TYPE));
         assertArrayEquals("bad-gateway".getBytes(), response.body());
         server.verify();
+        otelSpan.end();
     }
 }
