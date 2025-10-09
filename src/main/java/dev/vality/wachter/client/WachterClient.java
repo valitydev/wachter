@@ -17,8 +17,6 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class WachterClient {
 
-    private final TraceContextHeadersExtractor traceContextHeadersExtractor = new TraceContextHeadersExtractor();
-    private final TraceContextHeadersNormalizer traceContextHeadersNormalizer = new TraceContextHeadersNormalizer();
     private final RestClient restClient;
 
     private static final byte[] EMPTY_BODY = new byte[0];
@@ -26,7 +24,7 @@ public class WachterClient {
     public WachterClientResponse send(HttpServletRequest servletRequest, byte[] contentData, String url) {
         var httpMethod = resolveMethod(servletRequest);
 
-        var headers = traceContextHeadersExtractor.extractHeaders();
+        var headers = TraceContextHeadersExtractor.extractHeaders();
 
         log.info("-> Send request to {} {} | headers: {}", httpMethod, url, headers);
 
@@ -43,7 +41,7 @@ public class WachterClient {
             log.info("<- Receive response from {} {} | status: {}, headers: {}", httpMethod, url, status,
                     response.getHeaders());
             var responseBody = Objects.requireNonNullElse(response.bodyTo(byte[].class), EMPTY_BODY);
-            var responseHeaders = traceContextHeadersNormalizer.normalizeResponseHeaders(response.getHeaders());
+            var responseHeaders = TraceContextHeadersNormalizer.normalizeResponseHeaders(response.getHeaders());
             return new WachterClientResponse(status, responseHeaders, responseBody);
         });
     }

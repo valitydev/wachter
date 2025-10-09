@@ -6,6 +6,7 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionK
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +19,7 @@ import static dev.vality.wachter.constants.HeadersConstants.*;
 import static dev.vality.wachter.utils.DeadlineUtil.*;
 
 @Slf4j
+@UtilityClass
 public class TraceContextHeadersNormalizer {
 
     public Map<String, String> normalize(HttpServletRequest request) {

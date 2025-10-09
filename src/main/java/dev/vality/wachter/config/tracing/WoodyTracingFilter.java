@@ -28,8 +28,6 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
             HttpHeaders.SET_COOKIE.toLowerCase(Locale.ROOT)
     );
 
-    private final TraceContextHeadersNormalizer traceContextHeadersNormalizer = new TraceContextHeadersNormalizer();
-    private final TraceContextRestorer traceContextApplier = new TraceContextRestorer();
     private final int serverPort;
     private final String wachterEndpoint;
 
@@ -39,10 +37,10 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) {
         var requestPath = getRequestPath(request);
         if ((request.getLocalPort() == serverPort) && requestPath.equals(wachterEndpoint)) {
-            var normalized = traceContextHeadersNormalizer.normalize(request);
+            var normalized = TraceContextHeadersNormalizer.normalize(request);
             log.info("-> Received {} {} | params: {}, headers: {}",
                     request.getMethod(), getRequestPath(request), extractParams(request), sanitizeHeaders(request));
-            var restoredTraceData = traceContextApplier.restoreTraceData(normalized);
+            var restoredTraceData = TraceContextRestorer.restoreTraceData(normalized);
             WFlow.create(() -> doFilter(request, response, filterChain), restoredTraceData)
                     .run();
             log.info("<- Sent {} {} | status: {}, headers: {}",
@@ -58,7 +56,7 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private static String extractParams(HttpServletRequest servletRequest) {
+    public static String extractParams(HttpServletRequest servletRequest) {
         return servletRequest.getParameterMap().entrySet().stream()
                 .map(entry -> entry.getKey() + "=" + String.join(",", entry.getValue()))
                 .collect(Collectors.joining(", "));

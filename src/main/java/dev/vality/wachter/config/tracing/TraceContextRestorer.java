@@ -11,6 +11,7 @@ import dev.vality.woody.thrift.impl.http.TraceParentUtils;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.*;
 import io.opentelemetry.context.Context;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -20,6 +21,7 @@ import java.util.function.Consumer;
 import static dev.vality.wachter.constants.HeadersConstants.*;
 
 @Slf4j
+@UtilityClass
 public class TraceContextRestorer {
 
     public TraceData restoreTraceData(Map<String, String> headers) {

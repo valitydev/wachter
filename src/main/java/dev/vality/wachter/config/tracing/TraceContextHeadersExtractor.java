@@ -8,6 +8,7 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensi
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
 import dev.vality.woody.thrift.impl.http.TraceParentUtils;
 import io.opentelemetry.api.trace.Span;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -19,7 +20,8 @@ import java.util.Optional;
 import static dev.vality.wachter.constants.HeadersConstants.*;
 
 @Slf4j
-public final class TraceContextHeadersExtractor {
+@UtilityClass
+public class TraceContextHeadersExtractor {
 
     public Map<String, String> extractHeaders() {
         var traceData = TraceContext.getCurrentTraceData();
