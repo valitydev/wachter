@@ -1,4 +1,4 @@
-package dev.vality.wachter.config.tracing;
+package dev.vality.wachter.tracing;
 
 import dev.vality.woody.api.trace.Metadata;
 import dev.vality.woody.api.trace.context.TraceContext;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import static dev.vality.wachter.constants.HeadersConstants.*;
+import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 
 @Slf4j
 @UtilityClass
@@ -46,8 +46,8 @@ public class TraceContextHeadersExtractor {
         extractUserIdentityHeader(headers, customMetadata, UserIdentityUsernameExtensionKit.KEY);
         extractUserIdentityHeader(headers, customMetadata, UserIdentityEmailExtensionKit.KEY);
         extractUserIdentityHeader(headers, customMetadata, UserIdentityRealmExtensionKit.KEY);
-        putMetadataValue(headers, customMetadata, X_REQUEST_ID);
-        putMetadataValue(headers, customMetadata, X_REQUEST_DEADLINE);
+        putMetadataValue(headers, customMetadata, X_REQUEST_ID, WOODY_META_REQUEST_ID);
+        putMetadataValue(headers, customMetadata, X_REQUEST_DEADLINE, WOODY_META_REQUEST_DEADLINE);
         return headers;
     }
 
@@ -57,12 +57,16 @@ public class TraceContextHeadersExtractor {
             return;
         }
 
-        putMetadataValue(headers, customMetadata, WOODY_META_USER_IDENTITY_PREFIX + suffix);
+        var value = (String) customMetadata.getValue(extensionKey);
+        putIfNotNull(headers, WOODY_META_USER_IDENTITY_PREFIX + suffix, value);
     }
 
-    private void putMetadataValue(Map<String, String> headers, Metadata customMetadata, String key) {
-        var value = (String) customMetadata.getValue(key);
-        putIfNotNull(headers, key, value);
+    private void putMetadataValue(Map<String, String> headers,
+                                  Metadata customMetadata,
+                                  String metadataKey,
+                                  String headerKey) {
+        var value = (String) customMetadata.getValue(metadataKey);
+        putIfNotNull(headers, headerKey, value);
     }
 
     private void putIfNotNull(Map<String, String> headers,

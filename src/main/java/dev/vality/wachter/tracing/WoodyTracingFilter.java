@@ -1,4 +1,4 @@
-package dev.vality.wachter.config.tracing;
+package dev.vality.wachter.tracing;
 
 import dev.vality.woody.api.flow.WFlow;
 import jakarta.servlet.FilterChain;

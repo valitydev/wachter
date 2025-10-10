@@ -1,4 +1,4 @@
-package dev.vality.wachter.config.tracing;
+package dev.vality.wachter.tracing;
 
 import dev.vality.wachter.security.JwtTokenDetailsExtractor;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static dev.vality.wachter.constants.HeadersConstants.*;
+import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 import static dev.vality.wachter.utils.DeadlineUtil.*;
 
 @Slf4j
@@ -32,6 +32,7 @@ public class TraceContextHeadersNormalizer {
         }
         mergeJwtIntoHeaders(normalized);
         mergeRequestDeadline(request, normalized);
+        mergeWoodyRequestMetadata(normalized);
         return normalized.isEmpty() ? Map.of() : Map.copyOf(normalized);
     }
 
@@ -66,8 +67,8 @@ public class TraceContextHeadersNormalizer {
                 headers.put(lowerCase, value);
             } else {
                 var suffix = lowerCase.substring(X_WOODY_PREFIX.length());
-                if (suffix.startsWith(WoodySuffixes.META_USER_IDENTITY)) {
-                    var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY.length());
+                if (suffix.startsWith(WoodySuffixes.META_USER_IDENTITY_SUFFIX)) {
+                    var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY_SUFFIX.length());
                     headers.put(WOODY_META_USER_IDENTITY_PREFIX + metaKey, value);
                 } else {
                     headers.put(WOODY_PREFIX + suffix, value);
@@ -100,13 +101,30 @@ public class TraceContextHeadersNormalizer {
     private void mergeRequestDeadline(HttpServletRequest request, Map<String, String> headers) {
         var requestDeadlineHeader = request.getHeader(X_REQUEST_DEADLINE);
         var requestIdHeader = request.getHeader(X_REQUEST_ID);
+        if (requestIdHeader != null && !requestIdHeader.isEmpty()) {
+            headers.put(X_REQUEST_ID, requestIdHeader);
+        }
         if (requestDeadlineHeader == null) {
             return;
         }
         try {
-            headers.putIfAbsent(WOODY_DEADLINE, getInstant(requestDeadlineHeader, requestIdHeader).toString());
+            var normalizedDeadline = getInstant(requestDeadlineHeader, requestIdHeader).toString();
+            headers.putIfAbsent(WOODY_DEADLINE, normalizedDeadline);
+            headers.put(X_REQUEST_DEADLINE, normalizedDeadline);
         } catch (Exception e) {
             log.warn("Unable to parse 'X-Request-Deadline' header value '{}'", requestDeadlineHeader);
+        }
+    }
+
+    private void mergeWoodyRequestMetadata(Map<String, String> headers) {
+        var woodyRequestId = headers.get(WOODY_META_REQUEST_ID);
+        if (woodyRequestId != null && !woodyRequestId.isEmpty()) {
+            headers.put(X_REQUEST_ID, woodyRequestId);
+        }
+        var woodyDeadline = headers.get(WOODY_META_REQUEST_DEADLINE);
+        if (woodyDeadline != null && !woodyDeadline.isEmpty()) {
+            headers.put(X_REQUEST_DEADLINE, woodyDeadline);
+            headers.putIfAbsent(WOODY_DEADLINE, woodyDeadline);
         }
     }
 
@@ -135,9 +153,15 @@ public class TraceContextHeadersNormalizer {
             headers.addAll(lowerCase, values);
         } else {
             var suffix = lowerCase.substring(WOODY_PREFIX.length());
-            if (suffix.startsWith(WoodySuffixes.META_USER_IDENTITY_DOT)) {
-                var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY_DOT.length());
+            if (suffix.startsWith(WoodySuffixes.META_USER_IDENTITY_DOT_SUFFIX)) {
+                var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY_DOT_SUFFIX.length());
                 headers.addAll(X_WOODY_META_USER_IDENTITY_PREFIX + metaKey, values);
+                var metaKeyLower = metaKey.toLowerCase(Locale.ROOT);
+                if (metaKeyLower.equals("x-request-id")) {
+                    headers.addAll(X_REQUEST_ID, values);
+                } else if (metaKeyLower.equals("x-request-deadline")) {
+                    headers.addAll(X_REQUEST_DEADLINE, values);
+                }
             } else {
                 headers.addAll(X_WOODY_PREFIX + suffix, values);
             }

@@ -49,48 +49,84 @@ wachter:
     enabled: true
   serviceHeader: Service
   services:
+    Accounter:
+      name: Accounter
+      url: http://shumway:8022/accounter
     ClaimManagement:
       name: ClaimManagement
-      url: http://localhost:8097/v1/cm
+      url: http://claim-management:8022/v1/cm
     DepositManagement:
       name: DepositManagement
-      url: http://localhost:8022/v1/deposit
+      url: http://fistful:8022/v1/deposit
     Domain:
       name: Domain
-      url: http://localhost:8022/v1/domain/repository
+      url: http://dominant:8022/v1/domain/repository
+    RepositoryClient:
+      name: RepositoryClient
+      url: http://dominant:8022/v1/domain/repository_client
     DominantCache:
       name: DominantCache
-      url: http://localhost:8022/v1/dominant/cache
+      url: http://dominant-cache:8022/v1/dominant/cache
     FileStorage:
       name: FileStorage
-      url: http://localhost:8022/file_storage
+      url: http://file-storage-v2:8022/file_storage/v2
     FistfulStatistics:
       name: FistfulStatistics
-      url: http://localhost:8022/fistful/stat
+      url: http://fistful-magista:8022/stat
     MerchantStatistics:
       name: MerchantStatistics
-      url: http://localhost:8022/v3/stat
-    Messages:
-      name: Messages
-      url: http://localhost:8097/v1/messages
+      url: http://magista:8022/v3/stat
     Invoicing:
       name: Invoicing
-      url: http://localhost:8097/v1/processing/invoicin
+      url: http://hellgate:8022/v1/processing/invoicing
     PartyManagement:
       name: PartyManagement
-      url: http://localhost:8097/v1/processing/partymgmt
+      url: http://party-management:8022/v1/processing/partymgmt
     PayoutManagement:
       name: PayoutManagement
-      url: http://localhost:8097/payout/management
+      url: http://payout-manager:8022/payout/management
     RepairManagement:
       name: repairManagement
-      url: http://localhost:8097/v1/repair
+      url: http://repairer:8022/v1/repair
     WalletManagement:
       name: WalletManagement
-      url: http://localhost:8022/v1/wallet
+      url: http://fistful:8022/v1/wallet
     WithdrawalManagement:
       name: WithdrawalManagement
-      url: http://localhost:8022/v1/wallet
+      url: http://fistful:8022/v1/withdrawal
+    Automaton:
+      name: Automaton
+      url: http://machinegun-ha:8022/v1/automaton
+    Repairer:
+      name: Repairer
+      url: http://repairer:8022/v1/repair/withdrawal/session
+    FistfulAdmin:
+      name: FistfulAdmin
+      url: http://fistful:8022/v1/admin
+    Deanonimus:
+      name: Deanonimus
+      url: http://deanonimus:8022/deanonimus
+    PaymentProcessing:
+      name: PaymentProcessing
+      url: http://hellgate:8022/v1/processing/invoicing
+    IdentityManagement:
+      name: IdentityManagement
+      url: http://fistful:8022/v1/identity
+    Scrooge:
+      name: Scrooge
+      url: http://scrooge:8022/terminal/balance
+    Dominator:
+      name: Dominator
+      url: http://dominator:8022/v1/dominator
+    DMT:
+      name: DMT
+      url: http://dmt.default:8022/v1/domain/repository
+    DMTAuthor:
+      name: DMTAuthor
+      url: http://dmt.default:8022/v1/domain/author
+    DMTClient:
+      name: DMTClient
+      url: http://dmt.default:8022/v1/domain/repository_client
 
 
 http-client:
