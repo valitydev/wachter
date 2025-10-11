@@ -87,10 +87,6 @@ class ServletInstrumentationTest {
                 .filter(span -> span.getKind() == SpanKind.SERVER)
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Expected SERVER span"));
-        SpanData clientSpan = spans.stream()
-                .filter(span -> span.getKind() == SpanKind.CLIENT)
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Expected CLIENT span"));
 
         assertEquals("GET", serverSpan.getAttributes().get(HTTP_METHOD));
         int expectedStatus = statusCode;
@@ -101,6 +97,11 @@ class ServletInstrumentationTest {
             assertEquals(String.valueOf(expectedStatus), serverSpan.getAttributes().get(HTTP_STATUS));
         }
         assertTrue(serverSpan.getName().contains("/test/ping"));
+
+        SpanData clientSpan = spans.stream()
+                .filter(span -> span.getKind() == SpanKind.CLIENT)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Expected CLIENT span"));
 
         assertEquals("GET", clientSpan.getAttributes().get(HTTP_METHOD));
         Long clientStatusLong = clientSpan.getAttributes().get(HTTP_STATUS_LONG);
