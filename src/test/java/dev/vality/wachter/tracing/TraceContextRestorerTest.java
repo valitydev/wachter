@@ -7,6 +7,7 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionK
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
 import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
@@ -120,7 +121,10 @@ class TraceContextRestorerTest {
 
         TraceData traceData = TraceContextRestorer.restoreTraceData(headers);
 
-        assertEquals(traceId, traceData.getOtelSpan().getSpanContext().getTraceId());
+        assertEquals("00-" + traceId + "-6e4609576fa4d077-01", traceData.getInboundTraceParent());
+        var parentContext = Span.fromContext(traceData.consumePendingParentContext()).getSpanContext();
+        assertTrue(parentContext.isValid());
+        assertEquals(traceId, parentContext.getTraceId());
         assertNotNull(traceData.getServiceSpan().getSpan().getTraceId());
         assertNotNull(traceData.getServiceSpan().getSpan().getId());
         assertTrue(traceData.getOtelSpan().getSpanContext().isValid());
@@ -202,7 +206,10 @@ class TraceContextRestorerTest {
         assertEquals("complex-request-id", metadata.getValue(X_REQUEST_ID));
         assertEquals("2030-06-15T13:00:00Z", metadata.getValue(X_REQUEST_DEADLINE));
 
-        assertEquals(otelTraceId, traceData.getOtelSpan().getSpanContext().getTraceId());
+        assertEquals("00-" + otelTraceId + "-9cfa814ae977266e-01", traceData.getInboundTraceParent());
+        var parentContext = Span.fromContext(traceData.consumePendingParentContext()).getSpanContext();
+        assertTrue(parentContext.isValid());
+        assertEquals(otelTraceId, parentContext.getTraceId());
         assertNotNull(traceData.getServiceSpan().getSpan().getTraceId());
         assertNotNull(traceData.getServiceSpan().getSpan().getId());
         assertTrue(traceData.getOtelSpan().getSpanContext().isValid());

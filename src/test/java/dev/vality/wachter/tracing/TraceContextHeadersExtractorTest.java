@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -249,13 +250,19 @@ class TraceContextHeadersExtractorTest {
     }
 
     @Test
-    void shouldThrowWhenTraceDataIsNull() {
+    void shouldReturnHeadersWhenTraceDataIsAbsent() throws InterruptedException {
         TraceContext.setCurrentTraceData(null);
-        TraceContext.getCurrentTraceData().setOtelSpan(null);
 
-        assertThrows(NullPointerException.class, () -> {
-            TraceContextHeadersExtractor.extractHeaders();
+        var captured = new AtomicReference<Map<String, String>>();
+        var thread = new Thread(() -> {
+            captured.set(TraceContextHeadersExtractor.extractHeaders());
         });
+        thread.start();
+        thread.join();
+
+        var headers = captured.get();
+        assertNotNull(headers);
+        assertNotNull(headers.get(OTEL_TRACE_PARENT));
     }
 
     @Test
@@ -264,8 +271,6 @@ class TraceContextHeadersExtractorTest {
         traceData.setOtelSpan(null);
         TraceContext.setCurrentTraceData(traceData);
 
-        assertThrows(NullPointerException.class, () -> {
-            TraceContextHeadersExtractor.extractHeaders();
-        });
+        assertThrows(IllegalStateException.class, TraceContextHeadersExtractor::extractHeaders);
     }
 }

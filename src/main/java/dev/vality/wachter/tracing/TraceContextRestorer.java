@@ -7,10 +7,10 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensi
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
-import dev.vality.woody.thrift.impl.http.TraceParentUtils;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.*;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.TextMapGetter;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,10 +25,8 @@ import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 public class TraceContextRestorer {
 
     public TraceData restoreTraceData(Map<String, String> headers) {
-        var traceData = new TraceData();
-
-        TraceContext.initNewServiceTrace(traceData, WFlow.createDefaultIdGenerator(), WFlow.createDefaultIdGenerator());
-
+        var traceData = TraceContext.initNewServiceTrace(new TraceData(),
+                WFlow.createDefaultIdGenerator(), WFlow.createDefaultIdGenerator());
         if (headers.isEmpty()) {
             return traceData;
         }
@@ -38,11 +36,17 @@ public class TraceContextRestorer {
         setIfPresent(headers, WOODY_SPAN_ID, serviceSpan::setId);
         setIfPresent(headers, WOODY_PARENT_ID, serviceSpan::setParentId);
         setIfPresent(headers, WOODY_DEADLINE, value -> serviceSpan.setDeadline(Instant.parse(value)));
-        setIfPresent(headers, OTEL_TRACE_PARENT, value -> {
-            var otelSpan = initSpan(value);
-            otelSpan.makeCurrent();
-            traceData.setOtelSpan(otelSpan);
-        });
+        serviceSpan.setTimestamp(0);
+        serviceSpan.setDuration(0);
+
+        var extracted = GlobalOpenTelemetry.getPropagators()
+                .getTextMapPropagator()
+                .extract(Context.root(), headers, HEADER_GETTER);
+        if (io.opentelemetry.api.trace.Span.fromContext(extracted).getSpanContext().isValid()) {
+            traceData.setPendingParentContext(extracted);
+            traceData.setInboundTraceParent(headers.get(OTEL_TRACE_PARENT));
+            traceData.setInboundTraceState(headers.getOrDefault(OTEL_TRACE_STATE, null));
+        }
 
         var customMetadata = traceData.getActiveSpan().getCustomMetadata();
         applyUserIdentityHeader(headers, UserIdentityIdExtensionKit.KEY,
@@ -79,22 +83,15 @@ public class TraceContextRestorer {
         }
     }
 
-    private Span initSpan(String traceparent) {
-        return GlobalOpenTelemetry.getTracer(TraceData.WOODY)
-                .spanBuilder(TraceData.OTEL_CLIENT)
-                .setSpanKind(SpanKind.SERVER)
-                .setParent(
-                        Context.current().with(
-                                Span.wrap(
-                                        SpanContext.createFromRemoteParent(
-                                                TraceParentUtils.parseTraceId(traceparent),
-                                                TraceParentUtils.parseSpanId(traceparent),
-                                                TraceFlags.getSampled(),
-                                                TraceState.builder().build()
-                                        )
-                                )
-                        )
-                )
-                .startSpan();
-    }
+    private static final TextMapGetter<Map<String, String>> HEADER_GETTER = new TextMapGetter<>() {
+        @Override
+        public Iterable<String> keys(Map<String, String> carrier) {
+            return carrier.keySet();
+        }
+
+        @Override
+        public String get(Map<String, String> carrier, String key) {
+            return carrier.get(key);
+        }
+    };
 }

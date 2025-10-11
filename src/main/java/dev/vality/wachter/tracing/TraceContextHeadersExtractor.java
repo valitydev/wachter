@@ -6,8 +6,8 @@ import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensi
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
 import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
-import dev.vality.woody.thrift.impl.http.TraceParentUtils;
-import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.context.propagation.TextMapSetter;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,11 +24,11 @@ import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 public class TraceContextHeadersExtractor {
 
     public Map<String, String> extractHeaders() {
-        var traceData = TraceContext.getCurrentTraceData();
-        Objects.requireNonNull(traceData);
-        Objects.requireNonNull(traceData.getOtelSpan());
-        Objects.requireNonNull(traceData.getOtelSpan().getSpanContext());
-        if (!traceData.getOtelSpan().getSpanContext().isValid()) {
+        var traceData = Objects.requireNonNull(TraceContext.getCurrentTraceData(),
+                "TraceData should be present in TraceContext");
+        var otelSpan = Objects.requireNonNull(traceData.getOtelSpan(),
+                "OTel span should be attached to TraceData");
+        if (!otelSpan.getSpanContext().isValid()) {
             throw new IllegalStateException("SpanContext must be valid");
         }
 
@@ -39,7 +39,10 @@ public class TraceContextHeadersExtractor {
         putIfNotNull(headers, WOODY_PARENT_ID, span.getParentId());
         putIfNotNull(headers, WOODY_DEADLINE,
                 Optional.ofNullable(span.getDeadline()).map(Instant::toString).orElse(null));
-        putIfNotNull(headers, OTEL_TRACE_PARENT, initParentTraceFromSpan(traceData.getOtelSpan()));
+
+        GlobalOpenTelemetry.getPropagators()
+                .getTextMapPropagator()
+                .inject(traceData.getOtelContext(), headers, MAP_SETTER);
 
         var customMetadata = traceData.getActiveSpan().getCustomMetadata();
         extractUserIdentityHeader(headers, customMetadata, UserIdentityIdExtensionKit.KEY);
@@ -77,13 +80,9 @@ public class TraceContextHeadersExtractor {
         }
     }
 
-    private String initParentTraceFromSpan(Span otelSpan) {
-        var spanContext = otelSpan.getSpanContext();
-        return TraceParentUtils.initParentTrace(
-                TraceParentUtils.DEFAULT_VERSION,
-                spanContext.getTraceId(),
-                spanContext.getSpanId(),
-                spanContext.getTraceFlags().asHex()
-        );
-    }
+    private static final TextMapSetter<Map<String, String>> MAP_SETTER = (carrier, key, value) -> {
+        if (carrier != null && key != null && value != null && !value.isEmpty()) {
+            carrier.put(key, value);
+        }
+    };
 }

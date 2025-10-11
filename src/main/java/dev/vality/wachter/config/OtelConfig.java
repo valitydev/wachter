@@ -1,6 +1,6 @@
 package dev.vality.wachter.config;
 
-import dev.vality.wachter.config.properties.OtelProperties;
+import dev.vality.wachter.config.properties.OtelConfigProperties;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
@@ -12,7 +12,7 @@ import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.sdk.trace.samplers.Sampler;
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
+import io.opentelemetry.semconv.ServiceAttributes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +28,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class OtelConfig {
 
-    private final OtelProperties otelProperties;
+    private final OtelConfigProperties otelConfigProperties;
 
     @Value("${spring.application.name}")
     private String applicationName;
@@ -36,11 +36,11 @@ public class OtelConfig {
     @Bean
     public OpenTelemetry openTelemetryConfig() {
         var resource = Resource.getDefault()
-                .merge(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, applicationName)));
+                .merge(Resource.create(Attributes.of(ServiceAttributes.SERVICE_NAME, applicationName)));
         var sdkTracerProvider = SdkTracerProvider.builder()
                 .addSpanProcessor(BatchSpanProcessor.builder(OtlpHttpSpanExporter.builder()
-                                .setEndpoint(otelProperties.getResource())
-                                .setTimeout(Duration.ofMillis(otelProperties.getTimeout()))
+                                .setEndpoint(otelConfigProperties.getResource())
+                                .setTimeout(Duration.ofMillis(otelConfigProperties.getTimeout()))
                                 .build())
                         .build())
                 .setSampler(Sampler.alwaysOn())

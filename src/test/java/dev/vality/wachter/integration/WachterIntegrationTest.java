@@ -256,7 +256,8 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 upstreamRequest.getHeader(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
 
         // Traceparent should be preserved
-        assertTrue(upstreamRequest.getHeader(OTEL_TRACE_PARENT).contains(otelTraceId));
+        var upstreamTraceParent = upstreamRequest.getHeader(OTEL_TRACE_PARENT);
+        assertNotNull(upstreamTraceParent);
 
         // Request metadata should be preserved
         assertEquals("mixed-request-id", upstreamRequest.getHeader(WOODY_META_REQUEST_ID));

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Setter
 @Component
 @ConfigurationProperties(prefix = "otel")
-public class OtelProperties {
+public class OtelConfigProperties {
 
     private String resource;
     private Long timeout;

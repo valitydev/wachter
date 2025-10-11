@@ -59,9 +59,24 @@ class TraceContextPipelineTest {
         normalized.put(X_REQUEST_DEADLINE, "2030-01-01T00:00:00Z");
 
         var traceData = TraceContextRestorer.restoreTraceData(normalized);
+        assertTrue(traceData.getServiceSpan().getSpan().isFilled());
+        assertFalse(traceData.isClient());
         var extractedRef = new AtomicReference<Map<String, String>>();
 
-        WFlow.create(() -> extractedRef.set(TraceContextHeadersExtractor.extractHeaders()), traceData).run();
+        WFlow.create(() -> {
+            var idGenerator = WFlow.createDefaultIdGenerator();
+            var traceContext = new TraceContext(idGenerator, idGenerator);
+            traceContext.init();
+            try {
+                var current = TraceContext.getCurrentTraceData();
+                assertNotNull(current);
+                assertTrue(current.getServiceSpan().getSpan().isFilled());
+                assertFalse(current.isClient());
+                extractedRef.set(TraceContextHeadersExtractor.extractHeaders());
+            } finally {
+                traceContext.destroy();
+            }
+        }, traceData).run();
 
         var extracted = extractedRef.get();
         assertNotNull(extracted);
