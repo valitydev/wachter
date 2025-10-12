@@ -46,11 +46,9 @@ public class TraceContextHeadersNormalizer {
         (request.getHeaderNames() != null ? Collections.list(request.getHeaderNames()) : new ArrayList<String>())
                 .stream()
                 .map(s -> s.toLowerCase(Locale.ROOT))
-                .filter(s -> s.startsWith(WOODY_META_PREFIX) || s.startsWith(ExternalHeaders.X_WOODY_META_PREFIX))
+                .filter(s -> s.startsWith(WOODY_PREFIX) || s.startsWith(ExternalHeaders.X_WOODY_PREFIX))
                 .forEach(s -> {
-                    if (s.startsWith(WOODY_META_PREFIX)) {
-                        putIfNotNull(headers, s, request.getHeader(s));
-                    } else if (s.startsWith(ExternalHeaders.X_WOODY_META_PREFIX)) {
+                    if (s.startsWith(ExternalHeaders.X_WOODY_META_PREFIX)) {
                         var metaKey = s.substring(ExternalHeaders.X_WOODY_META_PREFIX.length());
                         if (metaKey.startsWith(ExternalHeaders.XWoodyMetaHeaders.USER_IDENTITY_PREFIX)) {
                             var userIdentityKey =
@@ -61,26 +59,42 @@ public class TraceContextHeadersNormalizer {
                         } else {
                             putIfNotNull(headers, WOODY_META_PREFIX + metaKey, request.getHeader(s));
                         }
+                    } else if (s.startsWith(ExternalHeaders.X_WOODY_PREFIX)) {
+                        putIfNotNull(headers, WOODY_PREFIX + s.substring(ExternalHeaders.X_WOODY_PREFIX.length()),
+                                request.getHeader(s));
+                    } else if (s.startsWith(WOODY_PREFIX)) {
+                        putIfNotNull(headers, s, request.getHeader(s));
                     }
                 });
-        putIfNotNull(headers, WOODY_TRACE_ID, Optional.ofNullable(request.getHeader(WOODY_TRACE_ID))
-                .orElse(request.getHeader(ExternalHeaders.X_WOODY_TRACE_ID)));
-        putIfNotNull(headers, WOODY_SPAN_ID, Optional.ofNullable(request.getHeader(WOODY_SPAN_ID))
-                .orElse(request.getHeader(ExternalHeaders.X_WOODY_SPAN_ID)));
-        putIfNotNull(headers, WOODY_PARENT_ID, Optional.ofNullable(request.getHeader(WOODY_PARENT_ID))
-                .orElse(request.getHeader(ExternalHeaders.X_WOODY_PARENT_ID)));
-        putIfNotNull(headers, WOODY_DEADLINE, Optional.ofNullable(request.getHeader(WOODY_DEADLINE))
-                .orElse(request.getHeader(ExternalHeaders.X_WOODY_DEADLINE)));
         putIfNotNull(headers, WOODY_META_REQUEST_ID, request.getHeader(ExternalHeaders.X_REQUEST_ID));
         putIfNotNull(headers, WOODY_META_REQUEST_DEADLINE, request.getHeader(ExternalHeaders.X_REQUEST_DEADLINE));
         putIfNotNull(headers, WOODY_META_REQUEST_INVOICE_ID, request.getHeader(ExternalHeaders.X_INVOICE_ID));
     }
 
-    private void putIfNotNull(Map<String, String> headers,
-                              String key,
-                              String value) {
-        if (value != null && !value.isEmpty()) {
-            headers.put(key, value);
+    private void normalizeWoodyResponseHeader(HttpHeaders headers,
+                                              String lowerCase,
+                                              List<String> values) {
+        if (lowerCase.startsWith(WOODY_META_PREFIX)) {
+            var metaKey = lowerCase.substring(WOODY_META_PREFIX.length());
+            if (metaKey.startsWith(WoodyMetaHeaders.USER_IDENTITY_PREFIX)) {
+                if (metaKey.equals(WoodyMetaHeaders.X_REQUEST_ID.toLowerCase(Locale.ROOT))) {
+                    headers.addAll(ExternalHeaders.X_REQUEST_ID, values);
+                } else if (metaKey.equals(WoodyMetaHeaders.X_REQUEST_DEADLINE.toLowerCase(Locale.ROOT))) {
+                    headers.addAll(ExternalHeaders.X_REQUEST_DEADLINE, values);
+                } else if (metaKey.equals(WoodyMetaHeaders.X_INVOICE_ID.toLowerCase(Locale.ROOT))) {
+                    headers.addAll(ExternalHeaders.X_INVOICE_ID, values);
+                } else {
+                    var userIdentityKey = metaKey.substring(WoodyMetaHeaders.USER_IDENTITY_PREFIX.length());
+                    headers.addAll(
+                            ExternalHeaders.X_WOODY_META_PREFIX +
+                                    ExternalHeaders.XWoodyMetaHeaders.USER_IDENTITY_PREFIX +
+                                    userIdentityKey, values);
+                }
+            } else {
+                headers.addAll(ExternalHeaders.X_WOODY_META_PREFIX + metaKey, values);
+            }
+        } else {
+            headers.addAll(ExternalHeaders.X_WOODY_PREFIX + lowerCase.substring(WOODY_PREFIX.length()), values);
         }
     }
 
@@ -119,6 +133,14 @@ public class TraceContextHeadersNormalizer {
         }
     }
 
+    private void putIfNotNull(Map<String, String> headers,
+                              String key,
+                              String value) {
+        if (value != null && !value.isEmpty()) {
+            headers.put(key, value);
+        }
+    }
+
     private Instant getInstant(String requestDeadlineHeader, String requestIdHeader) {
         if (containsRelativeValues(requestDeadlineHeader, requestIdHeader)) {
             return Instant.now()
@@ -127,32 +149,5 @@ public class TraceContextHeadersNormalizer {
                     .plus(extractMinutes(requestDeadlineHeader, requestIdHeader), ChronoUnit.MILLIS);
         }
         return Instant.parse(requestDeadlineHeader);
-    }
-
-    private void normalizeWoodyResponseHeader(HttpHeaders headers,
-                                              String lowerCase,
-                                              List<String> values) {
-        if (lowerCase.startsWith(WOODY_META_PREFIX)) {
-            var metaKey = lowerCase.substring(WOODY_META_PREFIX.length());
-            if (metaKey.startsWith(WoodyMetaHeaders.USER_IDENTITY_PREFIX)) {
-                if (metaKey.equals(WoodyMetaHeaders.X_REQUEST_ID.toLowerCase(Locale.ROOT))) {
-                    headers.addAll(ExternalHeaders.X_REQUEST_ID, values);
-                } else if (metaKey.equals(WoodyMetaHeaders.X_REQUEST_DEADLINE.toLowerCase(Locale.ROOT))) {
-                    headers.addAll(ExternalHeaders.X_REQUEST_DEADLINE, values);
-                } else if (metaKey.equals(WoodyMetaHeaders.X_INVOICE_ID.toLowerCase(Locale.ROOT))) {
-                    headers.addAll(ExternalHeaders.X_INVOICE_ID, values);
-                } else {
-                    var userIdentityKey = metaKey.substring(WoodyMetaHeaders.USER_IDENTITY_PREFIX.length());
-                    headers.addAll(
-                            ExternalHeaders.X_WOODY_META_PREFIX +
-                                    ExternalHeaders.XWoodyMetaHeaders.USER_IDENTITY_PREFIX +
-                                    userIdentityKey, values);
-                }
-            } else {
-                headers.addAll(ExternalHeaders.X_WOODY_META_PREFIX + metaKey, values);
-            }
-        } else {
-            headers.addAll(ExternalHeaders.X_WOODY_PREFIX + lowerCase.substring(WOODY_PREFIX.length()), values);
-        }
     }
 }
