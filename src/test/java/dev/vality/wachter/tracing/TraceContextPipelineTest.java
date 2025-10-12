@@ -51,12 +51,12 @@ class TraceContextPipelineTest {
         normalized.put(WOODY_DEADLINE, "2030-01-01T00:00:00Z");
         var otelTraceId = "3d8202ad198e4d37771c995246e1b356";
         normalized.put(OTEL_TRACE_PARENT, "00-" + otelTraceId + "-9cfa814ae977266e-01");
-        normalized.put(WOODY_META_USER_IDENTITY_PREFIX + "id", "user-id");
-        normalized.put(WOODY_META_USER_IDENTITY_PREFIX + "username", "user-name");
-        normalized.put(WOODY_META_USER_IDENTITY_PREFIX + "email", "user@example.com");
-        normalized.put(WOODY_META_USER_IDENTITY_PREFIX + "realm", "/internal");
-        normalized.put(X_REQUEST_ID, "request-id");
-        normalized.put(X_REQUEST_DEADLINE, "2030-01-01T00:00:00Z");
+        normalized.put(WOODY_META_ID, "user-id");
+        normalized.put(WOODY_META_USERNAME, "user-name");
+        normalized.put(WOODY_META_EMAIL, "user@example.com");
+        normalized.put(WOODY_META_REALM, "/internal");
+        normalized.put(WOODY_META_REQUEST_ID, "request-id");
+        normalized.put(WOODY_META_REQUEST_DEADLINE, "2030-01-01T00:00:00Z");
 
         var traceData = TraceContextRestorer.restoreTraceData(normalized);
         assertTrue(traceData.getServiceSpan().getSpan().isFilled());
@@ -64,18 +64,11 @@ class TraceContextPipelineTest {
         var extractedRef = new AtomicReference<Map<String, String>>();
 
         WFlow.create(() -> {
-            var idGenerator = WFlow.createDefaultIdGenerator();
-            var traceContext = new TraceContext(idGenerator, idGenerator);
-            traceContext.init();
-            try {
-                var current = TraceContext.getCurrentTraceData();
-                assertNotNull(current);
-                assertTrue(current.getServiceSpan().getSpan().isFilled());
-                assertFalse(current.isClient());
-                extractedRef.set(TraceContextHeadersExtractor.extractHeaders());
-            } finally {
-                traceContext.destroy();
-            }
+            var current = TraceContext.getCurrentTraceData();
+            assertNotNull(current);
+            assertTrue(current.getServiceSpan().getSpan().isFilled());
+            assertFalse(current.isClient());
+            extractedRef.set(TraceContextHeadersExtractor.extractHeaders());
         }, traceData).run();
 
         var extracted = extractedRef.get();
@@ -84,10 +77,10 @@ class TraceContextPipelineTest {
         assertEquals("GZyWNGugBBB", extracted.get(WOODY_SPAN_ID));
         assertEquals("undefined", extracted.get(WOODY_PARENT_ID));
         assertEquals("2030-01-01T00:00:00Z", extracted.get(WOODY_DEADLINE));
-        assertEquals("user-id", extracted.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
-        assertEquals("user-name", extracted.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
-        assertEquals("user@example.com", extracted.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
-        assertEquals("/internal", extracted.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+        assertEquals("user-id", extracted.get(WOODY_META_ID));
+        assertEquals("user-name", extracted.get(WOODY_META_USERNAME));
+        assertEquals("user@example.com", extracted.get(WOODY_META_EMAIL));
+        assertEquals("/internal", extracted.get(WOODY_META_REALM));
         assertEquals("request-id", extracted.get(WOODY_META_REQUEST_ID));
         assertEquals("2030-01-01T00:00:00Z", extracted.get(WOODY_META_REQUEST_DEADLINE));
         assertTrue(extracted.get(OTEL_TRACE_PARENT).contains(otelTraceId));

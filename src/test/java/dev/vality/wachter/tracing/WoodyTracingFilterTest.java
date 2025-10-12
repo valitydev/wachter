@@ -14,8 +14,8 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import static dev.vality.wachter.constants.TraceHeadersConstants.X_WOODY_SPAN_ID;
-import static dev.vality.wachter.constants.TraceHeadersConstants.X_WOODY_TRACE_ID;
+import static dev.vality.wachter.constants.TraceHeadersConstants.ExternalHeaders.X_WOODY_SPAN_ID;
+import static dev.vality.wachter.constants.TraceHeadersConstants.ExternalHeaders.X_WOODY_TRACE_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WoodyTracingFilterTest {

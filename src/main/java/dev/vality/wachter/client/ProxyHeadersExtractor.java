@@ -44,7 +44,7 @@ public class ProxyHeadersExtractor {
             "priority",
             "service",
             TraceHeadersConstants.OTEL_TRACE_PARENT,
-            TraceHeadersConstants.OTEL_TRACE_PARENT,
+            TraceHeadersConstants.OTEL_TRACE_STATE,
             TraceHeadersConstants.ExternalHeaders.X_REQUEST_ID,
             TraceHeadersConstants.ExternalHeaders.X_REQUEST_DEADLINE,
             TraceHeadersConstants.ExternalHeaders.X_INVOICE_ID

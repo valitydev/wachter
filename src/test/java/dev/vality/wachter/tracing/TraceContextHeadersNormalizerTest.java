@@ -21,8 +21,7 @@ import java.util.Optional;
 
 import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TraceContextHeadersNormalizerTest {
@@ -39,6 +38,19 @@ class TraceContextHeadersNormalizerTest {
     @BeforeEach
     void setUp() {
         SecurityContextHolder.clearContext();
+        lenient().when(request.getHeader(WOODY_TRACE_ID)).thenReturn(null);
+        lenient().when(request.getHeader(WOODY_SPAN_ID)).thenReturn(null);
+        lenient().when(request.getHeader(WOODY_PARENT_ID)).thenReturn(null);
+        lenient().when(request.getHeader(WOODY_DEADLINE)).thenReturn(null);
+        lenient().when(request.getHeader(OTEL_TRACE_PARENT)).thenReturn(null);
+        lenient().when(request.getHeader(OTEL_TRACE_STATE)).thenReturn(null);
+        lenient().when(request.getHeader(ExternalHeaders.X_WOODY_TRACE_ID)).thenReturn(null);
+        lenient().when(request.getHeader(ExternalHeaders.X_WOODY_SPAN_ID)).thenReturn(null);
+        lenient().when(request.getHeader(ExternalHeaders.X_WOODY_PARENT_ID)).thenReturn(null);
+        lenient().when(request.getHeader(ExternalHeaders.X_WOODY_DEADLINE)).thenReturn(null);
+        lenient().when(request.getHeader(ExternalHeaders.X_REQUEST_ID)).thenReturn(null);
+        lenient().when(request.getHeader(ExternalHeaders.X_REQUEST_DEADLINE)).thenReturn(null);
+        lenient().when(request.getHeader(ExternalHeaders.X_INVOICE_ID)).thenReturn(null);
     }
 
     @Test
@@ -62,11 +74,11 @@ class TraceContextHeadersNormalizerTest {
     @Test
     void shouldNormalizeXWoodyHeadersToWoody() {
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(List.of(
-                X_WOODY_TRACE_ID, X_WOODY_SPAN_ID, X_WOODY_PARENT_ID
+                ExternalHeaders.X_WOODY_TRACE_ID, ExternalHeaders.X_WOODY_SPAN_ID, ExternalHeaders.X_WOODY_PARENT_ID
         )));
-        when(request.getHeader(X_WOODY_TRACE_ID)).thenReturn("trace-123");
-        when(request.getHeader(X_WOODY_SPAN_ID)).thenReturn("span-456");
-        when(request.getHeader(X_WOODY_PARENT_ID)).thenReturn("parent-789");
+        when(request.getHeader(ExternalHeaders.X_WOODY_TRACE_ID)).thenReturn("trace-123");
+        when(request.getHeader(ExternalHeaders.X_WOODY_SPAN_ID)).thenReturn("span-456");
+        when(request.getHeader(ExternalHeaders.X_WOODY_PARENT_ID)).thenReturn("parent-789");
 
         var normalized = TraceContextHeadersNormalizer.normalize(request);
 
@@ -78,22 +90,22 @@ class TraceContextHeadersNormalizerTest {
     @Test
     void shouldNormalizeUserIdentityMetadataFromXWoody() {
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(List.of(
-                X_WOODY_META_USER_IDENTITY_PREFIX + "id",
-                X_WOODY_META_USER_IDENTITY_PREFIX + "username",
-                X_WOODY_META_USER_IDENTITY_PREFIX + "email",
-                X_WOODY_META_USER_IDENTITY_PREFIX + "realm"
+                ExternalHeaders.X_WOODY_META_ID,
+                ExternalHeaders.X_WOODY_META_USERNAME,
+                ExternalHeaders.X_WOODY_META_EMAIL,
+                ExternalHeaders.X_WOODY_META_REALM
         )));
-        when(request.getHeader(X_WOODY_META_USER_IDENTITY_PREFIX + "id")).thenReturn("user-id-123");
-        when(request.getHeader(X_WOODY_META_USER_IDENTITY_PREFIX + "username")).thenReturn("john.doe");
-        when(request.getHeader(X_WOODY_META_USER_IDENTITY_PREFIX + "email")).thenReturn("john@example.com");
-        when(request.getHeader(X_WOODY_META_USER_IDENTITY_PREFIX + "realm")).thenReturn("/internal");
+        when(request.getHeader(ExternalHeaders.X_WOODY_META_ID)).thenReturn("user-id-123");
+        when(request.getHeader(ExternalHeaders.X_WOODY_META_USERNAME)).thenReturn("john.doe");
+        when(request.getHeader(ExternalHeaders.X_WOODY_META_EMAIL)).thenReturn("john@example.com");
+        when(request.getHeader(ExternalHeaders.X_WOODY_META_REALM)).thenReturn("/internal");
 
         var normalized = TraceContextHeadersNormalizer.normalize(request);
 
-        assertEquals("user-id-123", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
-        assertEquals("john.doe", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
-        assertEquals("john@example.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
-        assertEquals("/internal", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+        assertEquals("user-id-123", normalized.get(WOODY_META_ID));
+        assertEquals("john.doe", normalized.get(WOODY_META_USERNAME));
+        assertEquals("john@example.com", normalized.get(WOODY_META_EMAIL));
+        assertEquals("/internal", normalized.get(WOODY_META_REALM));
     }
 
     @Test
@@ -125,19 +137,19 @@ class TraceContextHeadersNormalizerTest {
 
             var normalized = TraceContextHeadersNormalizer.normalize(request);
 
-            assertEquals("user-jwt-id", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
-            assertEquals("jwt-username", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
-            assertEquals("jwt@email.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
-            assertEquals("/jwt-realm", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+            assertEquals("user-jwt-id", normalized.get(WOODY_META_ID));
+            assertEquals("jwt-username", normalized.get(WOODY_META_USERNAME));
+            assertEquals("jwt@email.com", normalized.get(WOODY_META_EMAIL));
+            assertEquals("/jwt-realm", normalized.get(WOODY_META_REALM));
         }
     }
 
     @Test
     void shouldMergeJwtMetadataWithHeaders() {
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(List.of(
-                X_WOODY_META_USER_IDENTITY_PREFIX + "id"
+                ExternalHeaders.X_WOODY_META_ID
         )));
-        when(request.getHeader(X_WOODY_META_USER_IDENTITY_PREFIX + "id")).thenReturn("header-user-id");
+        when(request.getHeader(ExternalHeaders.X_WOODY_META_ID)).thenReturn("header-user-id");
         when(request.getHeader(OTEL_TRACE_PARENT)).thenReturn(null);
 
         SecurityContextHolder.setContext(securityContext);
@@ -156,35 +168,37 @@ class TraceContextHeadersNormalizerTest {
 
             var normalized = TraceContextHeadersNormalizer.normalize(request);
 
-            assertEquals("jwt-user-id", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
-            assertEquals("jwt-username", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
+            assertEquals("jwt-user-id", normalized.get(WOODY_META_ID));
+            assertEquals("jwt-username", normalized.get(WOODY_META_USERNAME));
         }
     }
 
     @Test
     void shouldMergeRequestDeadlineToWoodyDeadline() {
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(Collections.emptyList()));
-        when(request.getHeader(X_REQUEST_DEADLINE)).thenReturn("2030-12-31T23:59:59Z");
-        when(request.getHeader(X_REQUEST_ID)).thenReturn(null);
+        when(request.getHeader(ExternalHeaders.X_REQUEST_DEADLINE)).thenReturn("2030-12-31T23:59:59Z");
+        when(request.getHeader(ExternalHeaders.X_REQUEST_ID)).thenReturn(null);
         when(request.getHeader(OTEL_TRACE_PARENT)).thenReturn(null);
 
         var normalized = TraceContextHeadersNormalizer.normalize(request);
 
         assertEquals("2030-12-31T23:59:59Z", normalized.get(WOODY_DEADLINE));
-        assertEquals("2030-12-31T23:59:59Z", normalized.get(X_REQUEST_DEADLINE));
+        assertEquals("2030-12-31T23:59:59Z", normalized.get(WOODY_META_REQUEST_DEADLINE));
+        assertFalse(normalized.containsKey(ExternalHeaders.X_REQUEST_DEADLINE));
     }
 
     @Test
     void shouldMergeRelativeDeadline() {
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(Collections.emptyList()));
-        when(request.getHeader(X_REQUEST_DEADLINE)).thenReturn("30s");
-        when(request.getHeader(X_REQUEST_ID)).thenReturn("req-123");
+        when(request.getHeader(ExternalHeaders.X_REQUEST_DEADLINE)).thenReturn("30s");
+        when(request.getHeader(ExternalHeaders.X_REQUEST_ID)).thenReturn("req-123");
         when(request.getHeader(OTEL_TRACE_PARENT)).thenReturn(null);
 
         var normalized = TraceContextHeadersNormalizer.normalize(request);
 
         assertNotNull(normalized.get(WOODY_DEADLINE));
-        assertEquals(normalized.get(WOODY_DEADLINE), normalized.get(X_REQUEST_DEADLINE));
+        assertEquals(normalized.get(WOODY_DEADLINE), normalized.get(WOODY_META_REQUEST_DEADLINE));
+        assertFalse(normalized.containsKey(ExternalHeaders.X_REQUEST_DEADLINE));
         assertTrue(Instant.parse(normalized.get(WOODY_DEADLINE)).isAfter(Instant.now()));
     }
 
@@ -192,27 +206,29 @@ class TraceContextHeadersNormalizerTest {
     void shouldNotOverwriteExistingWoodyDeadline() {
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(List.of(WOODY_DEADLINE)));
         when(request.getHeader(WOODY_DEADLINE)).thenReturn("2025-01-01T00:00:00Z");
-        when(request.getHeader(X_REQUEST_DEADLINE)).thenReturn("2030-12-31T23:59:59Z");
-        when(request.getHeader(X_REQUEST_ID)).thenReturn(null);
+        when(request.getHeader(ExternalHeaders.X_REQUEST_DEADLINE)).thenReturn("2030-12-31T23:59:59Z");
+        when(request.getHeader(ExternalHeaders.X_REQUEST_ID)).thenReturn(null);
         when(request.getHeader(OTEL_TRACE_PARENT)).thenReturn(null);
 
         var normalized = TraceContextHeadersNormalizer.normalize(request);
 
         assertEquals("2025-01-01T00:00:00Z", normalized.get(WOODY_DEADLINE));
-        assertEquals("2030-12-31T23:59:59Z", normalized.get(X_REQUEST_DEADLINE));
+        assertEquals("2030-12-31T23:59:59Z", normalized.get(WOODY_META_REQUEST_DEADLINE));
+        assertFalse(normalized.containsKey(ExternalHeaders.X_REQUEST_DEADLINE));
     }
 
     @Test
     void shouldPreserveRequestIdWithoutDeadline() {
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(Collections.emptyList()));
-        when(request.getHeader(X_REQUEST_ID)).thenReturn("req-no-deadline");
+        when(request.getHeader(ExternalHeaders.X_REQUEST_ID)).thenReturn("req-no-deadline");
         when(request.getHeader(OTEL_TRACE_PARENT)).thenReturn(null);
-        when(request.getHeader(X_REQUEST_DEADLINE)).thenReturn(null);
+        when(request.getHeader(ExternalHeaders.X_REQUEST_DEADLINE)).thenReturn(null);
 
         var normalized = TraceContextHeadersNormalizer.normalize(request);
 
-        assertEquals("req-no-deadline", normalized.get(X_REQUEST_ID));
-        assertFalse(normalized.containsKey(X_REQUEST_DEADLINE));
+        assertEquals("req-no-deadline", normalized.get(WOODY_META_REQUEST_ID));
+        assertFalse(normalized.containsKey(WOODY_META_REQUEST_DEADLINE));
+        assertFalse(normalized.containsKey(ExternalHeaders.X_REQUEST_ID));
     }
 
     @Test
@@ -242,21 +258,21 @@ class TraceContextHeadersNormalizerTest {
     void shouldHandleComplexScenarioWithAllHeaderTypes() {
         when(request.getHeaderNames()).thenReturn(Collections.enumeration(List.of(
                 WOODY_TRACE_ID,
-                X_WOODY_SPAN_ID,
-                X_WOODY_PARENT_ID,
-                X_WOODY_META_USER_IDENTITY_PREFIX + "email",
+                ExternalHeaders.X_WOODY_SPAN_ID,
+                ExternalHeaders.X_WOODY_PARENT_ID,
+                ExternalHeaders.X_WOODY_META_EMAIL,
                 OTEL_TRACE_PARENT,
                 "content-type",
                 "authorization"
         )));
         when(request.getHeader(WOODY_TRACE_ID)).thenReturn("GZyWNGugAAA");
-        when(request.getHeader(X_WOODY_SPAN_ID)).thenReturn("GZyWNGugBBB");
-        when(request.getHeader(X_WOODY_PARENT_ID)).thenReturn("undefined");
-        when(request.getHeader(X_WOODY_META_USER_IDENTITY_PREFIX + "email")).thenReturn("noreply@valitydev.com");
+        when(request.getHeader(ExternalHeaders.X_WOODY_SPAN_ID)).thenReturn("GZyWNGugBBB");
+        when(request.getHeader(ExternalHeaders.X_WOODY_PARENT_ID)).thenReturn("undefined");
+        when(request.getHeader(ExternalHeaders.X_WOODY_META_EMAIL)).thenReturn("noreply@valitydev.com");
         when(request.getHeader(OTEL_TRACE_PARENT)).thenReturn(
                 "00-cfa3d3072a4e3e99fc14829a65311819-6e4609576fa4d077-01");
-        when(request.getHeader(X_REQUEST_ID)).thenReturn("req-complex");
-        when(request.getHeader(X_REQUEST_DEADLINE)).thenReturn("2030-01-01T00:00:00Z");
+        when(request.getHeader(ExternalHeaders.X_REQUEST_ID)).thenReturn("req-complex");
+        when(request.getHeader(ExternalHeaders.X_REQUEST_DEADLINE)).thenReturn("2030-01-01T00:00:00Z");
 
         SecurityContextHolder.setContext(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -277,15 +293,17 @@ class TraceContextHeadersNormalizerTest {
             assertEquals("GZyWNGugAAA", normalized.get(WOODY_TRACE_ID));
             assertEquals("GZyWNGugBBB", normalized.get(WOODY_SPAN_ID));
             assertEquals("undefined", normalized.get(WOODY_PARENT_ID));
-            assertEquals("noreply@valitydev.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
+            assertEquals("noreply@valitydev.com", normalized.get(WOODY_META_EMAIL));
             assertEquals("b54a93c4-415d-4f33-a5e9-3608fd043ff4",
-                    normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
-            assertEquals("noreply@valitydev.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
-            assertEquals("/internal", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+                    normalized.get(WOODY_META_ID));
+            assertEquals("noreply@valitydev.com", normalized.get(WOODY_META_USERNAME));
+            assertEquals("/internal", normalized.get(WOODY_META_REALM));
             assertEquals("00-cfa3d3072a4e3e99fc14829a65311819-6e4609576fa4d077-01", normalized.get(OTEL_TRACE_PARENT));
             assertEquals("2030-01-01T00:00:00Z", normalized.get(WOODY_DEADLINE));
-            assertEquals("req-complex", normalized.get(X_REQUEST_ID));
-            assertEquals("2030-01-01T00:00:00Z", normalized.get(X_REQUEST_DEADLINE));
+            assertEquals("req-complex", normalized.get(WOODY_META_REQUEST_ID));
+            assertEquals("2030-01-01T00:00:00Z", normalized.get(WOODY_META_REQUEST_DEADLINE));
+            assertFalse(normalized.containsKey(ExternalHeaders.X_REQUEST_ID));
+            assertFalse(normalized.containsKey(ExternalHeaders.X_REQUEST_DEADLINE));
         }
     }
 
@@ -294,31 +312,33 @@ class TraceContextHeadersNormalizerTest {
         var responseHeaders = new HttpHeaders();
         responseHeaders.add(WOODY_TRACE_ID, "resp-trace");
         responseHeaders.add(WOODY_SPAN_ID, "resp-span");
-        responseHeaders.add(X_WOODY_PARENT_ID, "resp-parent");
-        responseHeaders.add(WOODY_META_USER_IDENTITY_PREFIX + "id", "resp-user");
-        responseHeaders.add(WOODY_META_USER_IDENTITY_PREFIX + "x-request-id", "resp-req");
-        responseHeaders.add(WOODY_META_USER_IDENTITY_PREFIX + "x-request-deadline", "2030-01-01T00:00:00Z");
-        responseHeaders.add(OTEL_TRACE_PARENT, "00-abc-def-01");
+        responseHeaders.add(WOODY_PARENT_ID, "resp-parent");
+        responseHeaders.add(WOODY_META_ID, "resp-user");
+        responseHeaders.add(WOODY_META_REQUEST_ID, "resp-req");
+        responseHeaders.add(WOODY_META_REQUEST_DEADLINE, "2030-01-01T00:00:00Z");
+        responseHeaders.add(WOODY_META_REQUEST_INVOICE_ID, "resp-req");
         responseHeaders.add(WOODY_DEADLINE, "2030-01-01T00:00:00Z");
         responseHeaders.add(WOODY_ERROR_CLASS, "resp-req");
         responseHeaders.add(WOODY_ERROR_REASON, "resp-req");
+        responseHeaders.add(OTEL_TRACE_PARENT, "00-abc-def-01");
+        responseHeaders.add(OTEL_TRACE_STATE, "00-abc-def-01");
         responseHeaders.add("Content-Type", "application/json");
         responseHeaders.add("Cache-Control", "no-cache");
 
         var normalized = TraceContextHeadersNormalizer.normalizeResponseHeaders(responseHeaders);
 
-        assertTrue(normalized.containsKey(X_WOODY_TRACE_ID));
-        assertTrue(normalized.containsKey(X_WOODY_SPAN_ID));
-        assertTrue(normalized.containsKey(X_WOODY_PARENT_ID));
-        assertTrue(normalized.containsKey(X_WOODY_DEADLINE));
-        assertTrue(normalized.containsKey(X_WOODY_ERROR_CLASS));
-        assertTrue(normalized.containsKey(X_WOODY_ERROR_REASON));
-        assertTrue(normalized.containsKey(X_WOODY_META_USER_IDENTITY_PREFIX + "id"));
-        assertTrue(normalized.containsKey(X_WOODY_META_USER_IDENTITY_PREFIX + "x-request-id"));
-        assertTrue(normalized.containsKey(X_WOODY_META_USER_IDENTITY_PREFIX + "x-request-deadline"));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_WOODY_TRACE_ID));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_WOODY_SPAN_ID));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_WOODY_PARENT_ID));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_WOODY_DEADLINE));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_WOODY_ERROR_CLASS));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_WOODY_ERROR_REASON));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_WOODY_META_ID));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_REQUEST_ID));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_REQUEST_DEADLINE));
+        assertTrue(normalized.containsKey(ExternalHeaders.X_INVOICE_ID));
         assertTrue(normalized.containsKey(OTEL_TRACE_PARENT));
-        assertTrue(normalized.containsKey(X_REQUEST_ID));
-        assertTrue(normalized.containsKey(X_REQUEST_DEADLINE));
+        assertTrue(normalized.containsKey(OTEL_TRACE_STATE));
         assertFalse(normalized.containsKey("Content-Type"));
         assertFalse(normalized.containsKey("Cache-Control"));
     }

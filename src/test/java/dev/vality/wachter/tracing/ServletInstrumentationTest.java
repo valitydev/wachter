@@ -3,22 +3,17 @@ package dev.vality.wachter.tracing;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.data.SpanData;
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.client.RestClient;
-
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
 import java.util.List;
@@ -35,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class ServletInstrumentationTest {
 
     private static final AttributeKey<String> HTTP_METHOD = AttributeKey.stringKey("http.request.method");
-    private static final AttributeKey<String> HTTP_STATUS = AttributeKey.stringKey("http.response.status_code");
     private static final AttributeKey<Long> HTTP_STATUS_LONG = AttributeKey.longKey("http.response.status_code");
 
     @Value("${local.server.port}")
@@ -94,7 +88,7 @@ class ServletInstrumentationTest {
         if (statusLong != null) {
             assertEquals(expectedStatus, statusLong.intValue());
         } else {
-            assertEquals(String.valueOf(expectedStatus), serverSpan.getAttributes().get(HTTP_STATUS));
+            assertEquals(expectedStatus, serverSpan.getAttributes().get(HTTP_STATUS_LONG));
         }
         assertTrue(serverSpan.getName().contains("/test/ping"));
 
@@ -108,7 +102,7 @@ class ServletInstrumentationTest {
         if (clientStatusLong != null) {
             assertEquals(expectedStatus, clientStatusLong.intValue());
         } else {
-            assertEquals(String.valueOf(expectedStatus), clientSpan.getAttributes().get(HTTP_STATUS));
+            assertEquals(expectedStatus, clientSpan.getAttributes().get(HTTP_STATUS_LONG));
         }
     }
 

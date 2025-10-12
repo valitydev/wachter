@@ -132,9 +132,8 @@ public class TraceContextHeadersNormalizer {
     private void normalizeWoodyResponseHeader(HttpHeaders headers,
                                               String lowerCase,
                                               List<String> values) {
-        var suffix = lowerCase.substring(WOODY_PREFIX.length());
-        if (suffix.startsWith(WOODY_META_PREFIX)) {
-            var metaKey = suffix.substring(WOODY_META_PREFIX.length());
+        if (lowerCase.startsWith(WOODY_META_PREFIX)) {
+            var metaKey = lowerCase.substring(WOODY_META_PREFIX.length());
             if (metaKey.startsWith(WoodyMetaHeaders.USER_IDENTITY_PREFIX)) {
                 if (metaKey.equals(WoodyMetaHeaders.X_REQUEST_ID.toLowerCase(Locale.ROOT))) {
                     headers.addAll(ExternalHeaders.X_REQUEST_ID, values);
@@ -153,7 +152,7 @@ public class TraceContextHeadersNormalizer {
                 headers.addAll(ExternalHeaders.X_WOODY_META_PREFIX + metaKey, values);
             }
         } else {
-            headers.addAll(ExternalHeaders.X_WOODY_PREFIX + suffix, values);
+            headers.addAll(ExternalHeaders.X_WOODY_PREFIX + lowerCase.substring(WOODY_PREFIX.length()), values);
         }
     }
 }
