@@ -1,10 +1,6 @@
 package dev.vality.wachter.tracing;
 
 import dev.vality.wachter.security.JwtTokenDetailsExtractor;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionKit;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +20,10 @@ public class TraceContextHeadersNormalizer {
 
     public Map<String, String> normalize(HttpServletRequest request) {
         var normalized = new HashMap<String, String>();
-        var headerNamesEnumeration = request.getHeaderNames();
-        if (headerNamesEnumeration != null) {
-            var headerNames = Collections.list(headerNamesEnumeration);
-            normalizeWoodyHeaders(request, headerNames, normalized);
-            normalizeOtelHeaders(request, normalized);
-        }
+        normalizeWoodyHeaders(request, normalized);
+        normalizeOtelHeaders(request, normalized);
         mergeJwtIntoHeaders(normalized);
         mergeRequestDeadline(request, normalized);
-        mergeWoodyRequestMetadata(normalized);
         return normalized.isEmpty() ? Map.of() : Map.copyOf(normalized);
     }
 
@@ -41,10 +32,9 @@ public class TraceContextHeadersNormalizer {
         for (var entry : responseHeaders.entrySet()) {
             var headerName = entry.getKey();
             var lowerCase = headerName.toLowerCase(Locale.ROOT);
-            if (lowerCase.startsWith(WOODY_PREFIX) || lowerCase.startsWith(X_WOODY_PREFIX)) {
+            if (lowerCase.startsWith(WOODY_PREFIX)) {
                 normalizeWoodyResponseHeader(normalized, lowerCase, entry.getValue());
-            } else if (lowerCase.equals(X_REQUEST_ID.toLowerCase(Locale.ROOT))
-                    || lowerCase.equals(X_REQUEST_DEADLINE.toLowerCase(Locale.ROOT))
+            } else if (lowerCase.equals(OTEL_TRACE_STATE.toLowerCase(Locale.ROOT))
                     || lowerCase.equals(OTEL_TRACE_PARENT.toLowerCase(Locale.ROOT))) {
                 normalized.addAll(headerName, entry.getValue());
             }
@@ -52,36 +42,51 @@ public class TraceContextHeadersNormalizer {
         return normalized;
     }
 
-    private void normalizeWoodyHeaders(HttpServletRequest request, List<String> headerNames,
-                                       Map<String, String> headers) {
-        for (var name : headerNames) {
-            var lowerCase = name.toLowerCase(Locale.ROOT);
-            if (!lowerCase.startsWith(WOODY_PREFIX) && !lowerCase.startsWith(X_WOODY_PREFIX)) {
-                continue;
-            }
-            var value = request.getHeader(name);
-            if (value == null) {
-                continue;
-            }
-            if (lowerCase.startsWith(WOODY_PREFIX)) {
-                headers.put(lowerCase, value);
-            } else {
-                var suffix = lowerCase.substring(X_WOODY_PREFIX.length());
-                if (suffix.startsWith(WoodySuffixes.META_USER_IDENTITY_SUFFIX)) {
-                    var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY_SUFFIX.length());
-                    headers.put(WOODY_META_USER_IDENTITY_PREFIX + metaKey, value);
-                } else {
-                    headers.put(WOODY_PREFIX + suffix, value);
-                }
-            }
+    private void normalizeWoodyHeaders(HttpServletRequest request, Map<String, String> headers) {
+        (request.getHeaderNames() != null ? Collections.list(request.getHeaderNames()) : new ArrayList<String>())
+                .stream()
+                .map(s -> s.toLowerCase(Locale.ROOT))
+                .filter(s -> s.startsWith(WOODY_META_PREFIX) || s.startsWith(ExternalHeaders.X_WOODY_META_PREFIX))
+                .forEach(s -> {
+                    if (s.startsWith(WOODY_META_PREFIX)) {
+                        putIfNotNull(headers, s, request.getHeader(s));
+                    } else if (s.startsWith(ExternalHeaders.X_WOODY_META_PREFIX)) {
+                        var metaKey = s.substring(ExternalHeaders.X_WOODY_META_PREFIX.length());
+                        if (metaKey.startsWith(ExternalHeaders.XWoodyMetaHeaders.USER_IDENTITY_PREFIX)) {
+                            var userIdentityKey =
+                                    metaKey.substring(ExternalHeaders.XWoodyMetaHeaders.USER_IDENTITY_PREFIX.length());
+                            putIfNotNull(headers,
+                                    WOODY_META_PREFIX + WoodyMetaHeaders.USER_IDENTITY_PREFIX + userIdentityKey,
+                                    request.getHeader(s));
+                        } else {
+                            putIfNotNull(headers, WOODY_META_PREFIX + metaKey, request.getHeader(s));
+                        }
+                    }
+                });
+        putIfNotNull(headers, WOODY_TRACE_ID, Optional.ofNullable(request.getHeader(WOODY_TRACE_ID))
+                .orElse(request.getHeader(ExternalHeaders.X_WOODY_TRACE_ID)));
+        putIfNotNull(headers, WOODY_SPAN_ID, Optional.ofNullable(request.getHeader(WOODY_SPAN_ID))
+                .orElse(request.getHeader(ExternalHeaders.X_WOODY_SPAN_ID)));
+        putIfNotNull(headers, WOODY_PARENT_ID, Optional.ofNullable(request.getHeader(WOODY_PARENT_ID))
+                .orElse(request.getHeader(ExternalHeaders.X_WOODY_PARENT_ID)));
+        putIfNotNull(headers, WOODY_DEADLINE, Optional.ofNullable(request.getHeader(WOODY_DEADLINE))
+                .orElse(request.getHeader(ExternalHeaders.X_WOODY_DEADLINE)));
+        putIfNotNull(headers, WOODY_META_REQUEST_ID, request.getHeader(ExternalHeaders.X_REQUEST_ID));
+        putIfNotNull(headers, WOODY_META_REQUEST_DEADLINE, request.getHeader(ExternalHeaders.X_REQUEST_DEADLINE));
+        putIfNotNull(headers, WOODY_META_REQUEST_INVOICE_ID, request.getHeader(ExternalHeaders.X_INVOICE_ID));
+    }
+
+    private void putIfNotNull(Map<String, String> headers,
+                              String key,
+                              String value) {
+        if (value != null && !value.isEmpty()) {
+            headers.put(key, value);
         }
     }
 
     private void normalizeOtelHeaders(HttpServletRequest request, Map<String, String> headers) {
-        var traceParent = request.getHeader(OTEL_TRACE_PARENT);
-        if (traceParent != null) {
-            headers.put(OTEL_TRACE_PARENT, traceParent);
-        }
+        putIfNotNull(headers, OTEL_TRACE_PARENT, request.getHeader(OTEL_TRACE_PARENT));
+        putIfNotNull(headers, OTEL_TRACE_STATE, request.getHeader(OTEL_TRACE_STATE));
     }
 
     private void mergeJwtIntoHeaders(Map<String, String> headers) {
@@ -92,48 +97,26 @@ public class TraceContextHeadersNormalizer {
             return;
         }
         var details = tokenDetails.get();
-        putJwtMetadata(headers, UserIdentityIdExtensionKit.KEY, details.subject());
-        putJwtMetadata(headers, UserIdentityUsernameExtensionKit.KEY, details.preferredUsername());
-        putJwtMetadata(headers, UserIdentityEmailExtensionKit.KEY, details.email());
-        putJwtMetadata(headers, UserIdentityRealmExtensionKit.KEY, details.realm());
+        putIfNotNull(headers, WOODY_META_ID, details.subject());
+        putIfNotNull(headers, WOODY_META_USERNAME, details.preferredUsername());
+        putIfNotNull(headers, WOODY_META_EMAIL, details.email());
+        putIfNotNull(headers, WOODY_META_REALM, details.realm());
     }
 
     private void mergeRequestDeadline(HttpServletRequest request, Map<String, String> headers) {
-        var requestDeadlineHeader = request.getHeader(X_REQUEST_DEADLINE);
-        var requestIdHeader = request.getHeader(X_REQUEST_ID);
-        if (requestIdHeader != null && !requestIdHeader.isEmpty()) {
-            headers.put(X_REQUEST_ID, requestIdHeader);
-        }
+        var requestDeadlineHeader = request.getHeader(ExternalHeaders.X_REQUEST_DEADLINE);
+        var requestIdHeader = request.getHeader(ExternalHeaders.X_REQUEST_ID);
         if (requestDeadlineHeader == null) {
             return;
         }
         try {
             var normalizedDeadline = getInstant(requestDeadlineHeader, requestIdHeader).toString();
             headers.putIfAbsent(WOODY_DEADLINE, normalizedDeadline);
-            headers.put(X_REQUEST_DEADLINE, normalizedDeadline);
+            headers.put(WOODY_META_REQUEST_DEADLINE, normalizedDeadline);
         } catch (Exception e) {
-            log.warn("Unable to parse 'X-Request-Deadline' header value '{}'", requestDeadlineHeader);
+            log.warn("Unable to parse '" + ExternalHeaders.X_REQUEST_DEADLINE + "' header value '{}'",
+                    requestDeadlineHeader);
         }
-    }
-
-    private void mergeWoodyRequestMetadata(Map<String, String> headers) {
-        var woodyRequestId = headers.get(WOODY_META_REQUEST_ID);
-        if (woodyRequestId != null && !woodyRequestId.isEmpty()) {
-            headers.put(X_REQUEST_ID, woodyRequestId);
-        }
-        var woodyDeadline = headers.get(WOODY_META_REQUEST_DEADLINE);
-        if (woodyDeadline != null && !woodyDeadline.isEmpty()) {
-            headers.put(X_REQUEST_DEADLINE, woodyDeadline);
-            headers.putIfAbsent(WOODY_DEADLINE, woodyDeadline);
-        }
-    }
-
-    private void putJwtMetadata(Map<String, String> headers, String extensionKey, String value) {
-        var suffix = WoodySuffixes.userIdentitySuffix(extensionKey);
-        if (suffix.isEmpty() || value == null || value.isEmpty()) {
-            return;
-        }
-        headers.put(WOODY_META_USER_IDENTITY_PREFIX + suffix, value);
     }
 
     private Instant getInstant(String requestDeadlineHeader, String requestIdHeader) {
@@ -149,22 +132,28 @@ public class TraceContextHeadersNormalizer {
     private void normalizeWoodyResponseHeader(HttpHeaders headers,
                                               String lowerCase,
                                               List<String> values) {
-        if (lowerCase.startsWith(X_WOODY_PREFIX)) {
-            headers.addAll(lowerCase, values);
-        } else {
-            var suffix = lowerCase.substring(WOODY_PREFIX.length());
-            if (suffix.startsWith(WoodySuffixes.META_USER_IDENTITY_DOT_SUFFIX)) {
-                var metaKey = suffix.substring(WoodySuffixes.META_USER_IDENTITY_DOT_SUFFIX.length());
-                headers.addAll(X_WOODY_META_USER_IDENTITY_PREFIX + metaKey, values);
-                var metaKeyLower = metaKey.toLowerCase(Locale.ROOT);
-                if (metaKeyLower.equals("x-request-id")) {
-                    headers.addAll(X_REQUEST_ID, values);
-                } else if (metaKeyLower.equals("x-request-deadline")) {
-                    headers.addAll(X_REQUEST_DEADLINE, values);
+        var suffix = lowerCase.substring(WOODY_PREFIX.length());
+        if (suffix.startsWith(WOODY_META_PREFIX)) {
+            var metaKey = suffix.substring(WOODY_META_PREFIX.length());
+            if (metaKey.startsWith(WoodyMetaHeaders.USER_IDENTITY_PREFIX)) {
+                if (metaKey.equals(WoodyMetaHeaders.X_REQUEST_ID.toLowerCase(Locale.ROOT))) {
+                    headers.addAll(ExternalHeaders.X_REQUEST_ID, values);
+                } else if (metaKey.equals(WoodyMetaHeaders.X_REQUEST_DEADLINE.toLowerCase(Locale.ROOT))) {
+                    headers.addAll(ExternalHeaders.X_REQUEST_DEADLINE, values);
+                } else if (metaKey.equals(WoodyMetaHeaders.X_INVOICE_ID.toLowerCase(Locale.ROOT))) {
+                    headers.addAll(ExternalHeaders.X_INVOICE_ID, values);
+                } else {
+                    var userIdentityKey = metaKey.substring(WoodyMetaHeaders.USER_IDENTITY_PREFIX.length());
+                    headers.addAll(
+                            ExternalHeaders.X_WOODY_META_PREFIX +
+                                    ExternalHeaders.XWoodyMetaHeaders.USER_IDENTITY_PREFIX +
+                                    userIdentityKey, values);
                 }
             } else {
-                headers.addAll(X_WOODY_PREFIX + suffix, values);
+                headers.addAll(ExternalHeaders.X_WOODY_META_PREFIX + metaKey, values);
             }
+        } else {
+            headers.addAll(ExternalHeaders.X_WOODY_PREFIX + suffix, values);
         }
     }
 }

@@ -6,7 +6,6 @@ import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.StringUtils;
 
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -45,8 +44,10 @@ public class ProxyHeadersExtractor {
             "priority",
             "service",
             TraceHeadersConstants.OTEL_TRACE_PARENT,
-            TraceHeadersConstants.X_REQUEST_ID,
-            TraceHeadersConstants.X_REQUEST_DEADLINE
+            TraceHeadersConstants.OTEL_TRACE_PARENT,
+            TraceHeadersConstants.ExternalHeaders.X_REQUEST_ID,
+            TraceHeadersConstants.ExternalHeaders.X_REQUEST_DEADLINE,
+            TraceHeadersConstants.ExternalHeaders.X_INVOICE_ID
     ).map(header -> header.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
 
     private static final List<String> EXCLUDED_PREFIXES = List.of(
@@ -54,7 +55,7 @@ public class ProxyHeadersExtractor {
             "cdn-",
             "sec-",
             TraceHeadersConstants.WOODY_PREFIX,
-            TraceHeadersConstants.X_WOODY_PREFIX
+            TraceHeadersConstants.ExternalHeaders.X_WOODY_PREFIX
     );
 
     public HttpHeaders extractHeaders(HttpServletRequest request) {

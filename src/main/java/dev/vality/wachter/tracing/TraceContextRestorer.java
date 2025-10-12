@@ -3,12 +3,7 @@ package dev.vality.wachter.tracing;
 import dev.vality.woody.api.flow.WFlow;
 import dev.vality.woody.api.trace.TraceData;
 import dev.vality.woody.api.trace.context.TraceContext;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityEmailExtensionKit;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityIdExtensionKit;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityRealmExtensionKit;
-import dev.vality.woody.api.trace.context.metadata.user.UserIdentityUsernameExtensionKit;
 import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.opentelemetry.api.trace.*;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import lombok.experimental.UtilityClass;
@@ -30,15 +25,21 @@ public class TraceContextRestorer {
         if (headers.isEmpty()) {
             return traceData;
         }
-
-        var serviceSpan = traceData.getServiceSpan().getSpan();
-        setIfPresent(headers, WOODY_TRACE_ID, serviceSpan::setTraceId);
-        setIfPresent(headers, WOODY_SPAN_ID, serviceSpan::setId);
-        setIfPresent(headers, WOODY_PARENT_ID, serviceSpan::setParentId);
-        setIfPresent(headers, WOODY_DEADLINE, value -> serviceSpan.setDeadline(Instant.parse(value)));
-        serviceSpan.setTimestamp(0);
-        serviceSpan.setDuration(0);
-
+        var span = traceData.getActiveSpan().getSpan();
+        setIfPresent(headers, WOODY_TRACE_ID, span::setTraceId);
+        setIfPresent(headers, WOODY_SPAN_ID, span::setId);
+        setIfPresent(headers, WOODY_PARENT_ID, span::setParentId);
+        setIfPresent(headers, WOODY_DEADLINE, value -> span.setDeadline(Instant.parse(value)));
+        span.setTimestamp(0);
+        span.setDuration(0);
+        var customMetadata = traceData.getActiveSpan().getCustomMetadata();
+        headers.keySet()
+                .stream()
+                .filter(s -> s.startsWith(WOODY_META_PREFIX))
+                .forEach(s -> {
+                    var metaKey = s.substring(WOODY_META_PREFIX.length());
+                    setIfPresent(headers, s, value -> customMetadata.putValue(metaKey, value));
+                });
         var extracted = GlobalOpenTelemetry.getPropagators()
                 .getTextMapPropagator()
                 .extract(Context.root(), headers, HEADER_GETTER);
@@ -47,29 +48,7 @@ public class TraceContextRestorer {
             traceData.setInboundTraceParent(headers.get(OTEL_TRACE_PARENT));
             traceData.setInboundTraceState(headers.getOrDefault(OTEL_TRACE_STATE, null));
         }
-
-        var customMetadata = traceData.getActiveSpan().getCustomMetadata();
-        applyUserIdentityHeader(headers, UserIdentityIdExtensionKit.KEY,
-                value -> customMetadata.putValue(UserIdentityIdExtensionKit.KEY, value));
-        applyUserIdentityHeader(headers, UserIdentityUsernameExtensionKit.KEY,
-                value -> customMetadata.putValue(UserIdentityUsernameExtensionKit.KEY, value));
-        applyUserIdentityHeader(headers, UserIdentityEmailExtensionKit.KEY,
-                value -> customMetadata.putValue(UserIdentityEmailExtensionKit.KEY, value));
-        applyUserIdentityHeader(headers, UserIdentityRealmExtensionKit.KEY,
-                value -> customMetadata.putValue(UserIdentityRealmExtensionKit.KEY, value));
-        setIfPresent(headers, X_REQUEST_ID, value -> customMetadata.putValue(X_REQUEST_ID, value));
-        setIfPresent(headers, X_REQUEST_DEADLINE, value -> customMetadata.putValue(X_REQUEST_DEADLINE, value));
         return traceData;
-    }
-
-    private void applyUserIdentityHeader(Map<String, String> headers,
-                                         String extensionKey,
-                                         Consumer<String> consumer) {
-        var suffix = WoodySuffixes.userIdentitySuffix(extensionKey);
-        if (suffix.isEmpty()) {
-            return;
-        }
-        setIfPresent(headers, WOODY_META_USER_IDENTITY_PREFIX + suffix, consumer);
     }
 
     private void setIfPresent(Map<String, String> headers, String key, Consumer<String> consumer) {
