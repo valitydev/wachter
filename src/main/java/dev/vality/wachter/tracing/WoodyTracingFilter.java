@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static dev.vality.wachter.config.WebConfig.getRequestPath;
+import static dev.vality.wachter.constants.TraceHeadersConstants.WOODY_TRACE_ID;
 import static io.opentelemetry.api.trace.StatusCode.ERROR;
 import static io.opentelemetry.api.trace.StatusCode.OK;
 
@@ -41,14 +43,20 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) {
         var requestPath = getRequestPath(request);
         if ((request.getLocalPort() == serverPort) && requestPath.equals(wachterEndpoint)) {
-            log.info("-> Received {} {} | params: {}, headers: {}", request.getMethod(), getRequestPath(request),
-                    extractParams(request), sanitizeHeaders(request));
             var normalized = TraceContextHeadersNormalizer.normalize(request);
             var validated = TraceContextHeadersValidation.validate(normalized);
+            MDC.put(WOODY_TRACE_ID, validated.get(WOODY_TRACE_ID) != null ? validated.get(WOODY_TRACE_ID) : "");
+            log.info("-> Received {} {} | params: {}, headers: {}", request.getMethod(), getRequestPath(request),
+                    extractParams(request), sanitizeHeaders(request));
+            MDC.remove(WOODY_TRACE_ID);
             var restoredTraceData = TraceContextRestorer.restoreTraceData(validated);
+
             WFlow.create(() -> doFilterWithTraceHandling(request, response, filterChain), restoredTraceData).run();
+
+            MDC.put(WOODY_TRACE_ID, validated.get(WOODY_TRACE_ID) != null ? validated.get(WOODY_TRACE_ID) : "");
             log.info("<- Sent {} {} | status: {}, headers: {}", request.getMethod(), getRequestPath(request),
                     response.getStatus(), sanitizeResponseHeaders(response));
+            MDC.remove(WOODY_TRACE_ID);
             return;
         }
         doFilter(request, response, filterChain);
