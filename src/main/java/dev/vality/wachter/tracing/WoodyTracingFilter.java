@@ -30,25 +30,43 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
             HttpHeaders.SET_COOKIE.toLowerCase(Locale.ROOT)
     );
 
-    private final int serverPort;
-    private final String wachterEndpoint;
+    private final int defaultServerPort;
+    private final String defaultEndpoint;
     private final TracingProperties tracingProperties;
     private final WoodyTraceLifecycleHandler woodyTraceLifecycleHandler;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) {
-        var requestPath = getRequestPath(request);
-        if ((request.getLocalPort() == serverPort) && requestPath.equals(wachterEndpoint)) {
-            if (tracingProperties.isTraceRestore()) {
-                handleWithTraceRestore(request, response, filterChain);
-            } else {
-                handleLightweightRequest(request, response, filterChain);
+    @SneakyThrows
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
+        if (matchesConfiguredEndpoint(request)) {
+            switch (tracingProperties.getRequestHeaderMode()) {
+                case OFF -> handle(request, response, filterChain);
+                case WOODY_OR_X_WOODY -> handleWithTraceRestore(request, response, filterChain);
             }
             return;
         }
-        doFilter(request, response, filterChain);
+        filterChain.doFilter(request, response);
+    }
+
+    private boolean matchesConfiguredEndpoint(HttpServletRequest request) {
+        var port = request.getLocalPort();
+        var path = getRequestPath(request);
+        var endpoints = tracingProperties.getEndpoints();
+        if (endpoints == null || endpoints.isEmpty()) {
+            var matched = port == defaultServerPort && path.equals(defaultEndpoint);
+            log.debug("Tracing filter endpoint match (default) port={} path={} matched={}", port, path,
+                    matched);
+            return matched;
+        }
+        endpoints.forEach(endpoint -> log.debug("Tracing filter endpoint candidate port={} path={} -> "
+                        + "portMatch={} pathMatch={}",
+                endpoint.getPort(), endpoint.getPath(), matchesPort(endpoint.getPort(), port),
+                matchesPath(endpoint.getPath(), path)));
+        var matched = endpoints.stream().anyMatch(endpoint -> matchesPort(endpoint.getPort(), port)
+                && matchesPath(endpoint.getPath(), path));
+        log.debug("Tracing filter endpoint match port={} path={} matched={} endpoints={}", port, path, matched,
+                endpoints);
+        return matched;
     }
 
     private void handleWithTraceRestore(HttpServletRequest request,
@@ -58,25 +76,23 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
         var headersForTrace = TraceContextHeadersValidation.validate(normalized);
         var restoredTraceData = TraceContextRestorer.restoreTraceData(headersForTrace);
         WFlow.create(() -> {
-            logReceived(request);
-            doFilterWithTraceHandling(request, response, filterChain);
-            logSent(request, response);
-        }, restoredTraceData).run();
+                    logReceived(request);
+                    doFilterWithTraceHandling(request, response, filterChain);
+                    logSent(request, response);
+                }, restoredTraceData)
+                .run();
     }
 
-    private void handleLightweightRequest(HttpServletRequest request,
-                                          HttpServletResponse response,
-                                          FilterChain filterChain) {
-        logReceived(request);
-        new WFlow().createServiceFork(() -> doFilter(request, response, filterChain)).run();
-        logSent(request, response);
+    private void handle(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
+        new WFlow().createServiceFork(() -> {
+                    logReceived(request);
+                    doFilterWithTraceHandling(request, response, filterChain);
+                    logSent(request, response);
+                })
+                .run();
     }
 
     @SneakyThrows
-    private void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
-        filterChain.doFilter(request, response);
-    }
-
     private void doFilterWithTraceHandling(HttpServletRequest request,
                                            HttpServletResponse response,
                                            FilterChain filterChain) {
@@ -85,9 +101,17 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
             woodyTraceLifecycleHandler.handleSuccess(response);
         } catch (WRuntimeException woodyError) {
             log.warn("Handled Woody exception during request processing", woodyError);
+            woodyTraceLifecycleHandler.recordOtelSpanException(woodyError);
+            if (tracingProperties.shouldPropagateErrors()) {
+                throw woodyError;
+            }
             woodyTraceLifecycleHandler.handleWoodyException(response, woodyError);
         } catch (Throwable unexpected) {
             log.error("Unhandled exception during request processing", unexpected);
+            woodyTraceLifecycleHandler.recordOtelSpanException(unexpected);
+            if (tracingProperties.shouldPropagateErrors()) {
+                throw unexpected;
+            }
             woodyTraceLifecycleHandler.handleUnexpectedError(response, unexpected);
         }
     }
@@ -102,6 +126,16 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
                 response.getStatus(), sanitizeResponseHeaders(response));
     }
 
+    private boolean matchesPort(Integer configuredPort, int actualPort) {
+        return configuredPort == null || configuredPort == actualPort;
+    }
+
+    private boolean matchesPath(String configuredPath, String actualPath) {
+        if (configuredPath == null || configuredPath.isBlank()) {
+            return true;
+        }
+        return actualPath.equals(configuredPath);
+    }
 
     public static String extractParams(HttpServletRequest servletRequest) {
         return servletRequest.getParameterMap().entrySet().stream()
