@@ -14,10 +14,10 @@ import java.util.List;
 @ConfigurationProperties(prefix = "woody-http-bridge.tracing")
 public class TracingProperties {
 
-    private boolean traceRestore = true;
+    private RequestHeaderMode requestHeaderMode = RequestHeaderMode.OFF;
     private ResponseHeaderMode responseHeaderMode = ResponseHeaderMode.OFF;
-    private List<Endpoint> endpoints = new ArrayList<>();
     private Boolean propagateErrors;
+    private List<Endpoint> endpoints = new ArrayList<>();
 
     @Getter
     @Setter
@@ -35,10 +35,15 @@ public class TracingProperties {
         return responseHeaderMode == ResponseHeaderMode.OFF;
     }
 
+    public enum RequestHeaderMode {
+        OFF,
+        WOODY_OR_X_WOODY
+    }
+
     public enum ResponseHeaderMode {
+        OFF,
         WOODY,
         X_WOODY,
-        HTTP,
-        OFF
+        HTTP
     }
 }

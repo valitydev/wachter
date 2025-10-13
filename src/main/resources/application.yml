@@ -45,7 +45,7 @@ info:
 
 woody-http-bridge:
   tracing:
-    trace-restore: true
+    request-header-mode: WOODY_OR_X_WOODY
     response-header-mode: OFF
     propagate-errors: false
     endpoints:
