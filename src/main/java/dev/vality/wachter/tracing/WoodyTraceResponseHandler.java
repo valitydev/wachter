@@ -62,6 +62,19 @@ public final class WoodyTraceResponseHandler {
         recordOtelSpanException(traceData, null, throwable);
     }
 
+    private void recordOtelSpanException(TraceData traceData, HttpServletResponse response, Throwable throwable) {
+        var span = extractSpan(traceData);
+        if (span == null || !span.getSpanContext().isValid()) {
+            return;
+        }
+        var status = response != null ? response.getStatus() : 0;
+        if (status > 0) {
+            span.setAttribute(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, status);
+        }
+        span.recordException(throwable);
+        span.setStatus(StatusCode.ERROR);
+    }
+
     private THResponseInfo resolveResponseInfo(TraceData traceData, Throwable throwable) {
         if (traceData == null) {
             return fallbackResponseInfo(fallbackDefinition(throwable));
@@ -114,19 +127,6 @@ public final class WoodyTraceResponseHandler {
         }
     }
 
-    private void recordOtelSpanException(TraceData traceData, HttpServletResponse response, Throwable throwable) {
-        var span = extractSpan(traceData);
-        if (span == null || !span.getSpanContext().isValid()) {
-            return;
-        }
-        var status = response != null ? response.getStatus() : 0;
-        if (status > 0) {
-            span.setAttribute(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, status);
-        }
-        span.recordException(throwable);
-        span.setStatus(StatusCode.ERROR);
-    }
-
     private void applyHeaders(HttpServletResponse response,
                               TraceData traceData,
                               THResponseInfo responseInfo,
@@ -167,6 +167,8 @@ public final class WoodyTraceResponseHandler {
             case WOODY -> applyWoodyHeaders(response, headers);
             case X_WOODY -> applyXWoodyHeaders(response, headers);
             case HTTP -> applyHttpHeaders(response, headers);
+            default -> {
+            }
         }
     }
 

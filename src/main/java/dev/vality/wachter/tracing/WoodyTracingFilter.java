@@ -46,6 +46,7 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
         switch (policy.requestHeaderMode()) {
             case OFF -> handleWithoutTraceRestore(request, response, filterChain, policy);
             case WOODY_OR_X_WOODY -> handleWithTraceRestore(request, response, filterChain, policy);
+            default -> filterChain.doFilter(request, response);
         }
     }
 
@@ -54,11 +55,10 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
                                            FilterChain filterChain,
                                            TracePolicy policy) {
         new WFlow().createServiceFork(() -> {
-                    logReceived(request);
-                    doFilterWithTraceHandling(request, response, filterChain, policy);
-                    logSent(request, response);
-                })
-                .run();
+            logReceived(request);
+            doFilterWithTraceHandling(request, response, filterChain, policy);
+            logSent(request, response);
+        }).run();
     }
 
     private void handleWithTraceRestore(HttpServletRequest request,
@@ -69,11 +69,10 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
         var headersForTrace = TraceContextHeadersValidation.validate(normalized);
         var restoredTraceData = TraceContextRestorer.restoreTraceData(headersForTrace);
         WFlow.create(() -> {
-                    logReceived(request);
-                    doFilterWithTraceHandling(request, response, filterChain, policy);
-                    logSent(request, response);
-                }, restoredTraceData)
-                .run();
+            logReceived(request);
+            doFilterWithTraceHandling(request, response, filterChain, policy);
+            logSent(request, response);
+        }, restoredTraceData).run();
     }
 
     @SneakyThrows

@@ -62,8 +62,8 @@ public class TracingProperties {
     }
 
     private TracePolicy buildPolicy(Endpoint endpoint, int port, String path) {
-        var effectiveRequestMode = Optional.of(endpoint.getRequestHeaderMode()).orElse(DEFAULT_REQUEST_MODE);
-        var effectiveResponseMode = Optional.of(endpoint.getResponseHeaderMode()).orElse(DEFAULT_RESPONSE_MODE);
+        var effectiveRequestMode = Optional.ofNullable(endpoint.getRequestHeaderMode()).orElse(DEFAULT_REQUEST_MODE);
+        var effectiveResponseMode = Optional.ofNullable(endpoint.getResponseHeaderMode()).orElse(DEFAULT_RESPONSE_MODE);
         var effectivePropagate = Optional.ofNullable(endpoint.getPropagateErrors())
                 .orElse(effectiveResponseMode == ResponseHeaderMode.OFF);
         return new TracePolicy(port, path, effectiveRequestMode, effectiveResponseMode, effectivePropagate);
