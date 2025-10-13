@@ -117,7 +117,7 @@ class TraceContextHeadersNormalizerTest {
                     "user-jwt-id",
                     "jwt-username",
                     "jwt@email.com",
-                    "/jwt-realm",
+                    "jwt-realm",
                     List.of("ROLE_USER")
             );
             extractor.when(() -> JwtTokenDetailsExtractor.extractFromContext(authentication))
@@ -128,7 +128,7 @@ class TraceContextHeadersNormalizerTest {
             assertEquals("user-jwt-id", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
             assertEquals("jwt-username", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
             assertEquals("jwt@email.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "email"));
-            assertEquals("/jwt-realm", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+            assertEquals("jwt-realm", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
         }
     }
 
@@ -266,7 +266,7 @@ class TraceContextHeadersNormalizerTest {
                     "b54a93c4-415d-4f33-a5e9-3608fd043ff4",
                     "noreply@valitydev.com",
                     "noreply@valitydev.com",
-                    "/internal",
+                    "internal",
                     List.of("ROLE_USER")
             );
             extractor.when(() -> JwtTokenDetailsExtractor.extractFromContext(authentication))
@@ -281,7 +281,7 @@ class TraceContextHeadersNormalizerTest {
             assertEquals("b54a93c4-415d-4f33-a5e9-3608fd043ff4",
                     normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "id"));
             assertEquals("noreply@valitydev.com", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "username"));
-            assertEquals("/internal", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+            assertEquals("internal", normalized.get(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
             assertEquals("00-cfa3d3072a4e3e99fc14829a65311819-6e4609576fa4d077-01", normalized.get(OTEL_TRACE_PARENT));
             assertEquals("2030-01-01T00:00:00Z", normalized.get(WOODY_DEADLINE));
             assertEquals("req-complex", normalized.get(X_REQUEST_ID));
