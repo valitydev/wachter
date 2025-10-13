@@ -377,10 +377,21 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
             return null;
         }
         var issuer = issuerNode.asText();
-        if (issuer.isBlank()) {
+        if (issuer == null) {
             return null;
         }
-        var lastSlash = issuer.lastIndexOf('/');
-        return lastSlash >= 0 ? issuer.substring(lastSlash) : issuer;
+        var normalized = issuer.trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        var lastSlash = normalized.lastIndexOf('/');
+        var realm = lastSlash >= 0 ? normalized.substring(lastSlash + 1) : normalized;
+        return realm.isBlank() ? null : realm;
     }
 }
