@@ -20,6 +20,7 @@ import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 public class TraceContextRestorer {
 
     public TraceData restoreTraceData(Map<String, String> headers) {
+        log.debug("Restoring trace data from headers: {}", headers);
         var traceData = TraceContext.initNewServiceTrace(new TraceData(),
                 WFlow.createDefaultIdGenerator(), WFlow.createDefaultIdGenerator());
         if (headers.isEmpty()) {

@@ -40,6 +40,7 @@ public class TraceContextHeadersExtractor {
         GlobalOpenTelemetry.getPropagators()
                 .getTextMapPropagator()
                 .inject(traceData.getOtelContext(), headers, MAP_SETTER);
+        log.debug("Extracted trace headers: {}", headers);
         return headers;
     }
 

@@ -46,6 +46,8 @@ public class TraceHeadersConstants {
         public static final String X_WOODY_META_USERNAME = X_WOODY_META_PREFIX + XWoodyMetaHeaders.USERNAME;
         public static final String X_WOODY_META_EMAIL = X_WOODY_META_PREFIX + XWoodyMetaHeaders.EMAIL;
         public static final String X_WOODY_META_REALM = X_WOODY_META_PREFIX + XWoodyMetaHeaders.REALM;
+        public static final String X_ERROR_CLASS = "X-Error-Class";
+        public static final String X_ERROR_REASON = "X-Error-Reason";
 
         public static final class XWoodyMetaHeaders {
 

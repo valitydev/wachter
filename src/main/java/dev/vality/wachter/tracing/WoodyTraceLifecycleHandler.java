@@ -38,7 +38,7 @@ public final class WoodyTraceLifecycleHandler {
 
     void handleSuccess(HttpServletResponse response) {
         var traceData = TraceContext.getCurrentTraceData();
-        updateSpanStatus(traceData, response.getStatus());
+        recordOtelSpanStatus(traceData, response.getStatus());
         applyHeaders(response, traceData, null);
     }
 
@@ -46,7 +46,7 @@ public final class WoodyTraceLifecycleHandler {
         var traceData = TraceContext.getCurrentTraceData();
         var responseInfo = resolveResponseInfo(traceData, throwable);
         applyResponseInfo(response, responseInfo);
-        recordException(traceData, response, throwable);
+        recordOtelSpanException(traceData, response, throwable);
         applyHeaders(response, traceData, responseInfo);
         flushQuietly(response);
     }
@@ -55,12 +55,56 @@ public final class WoodyTraceLifecycleHandler {
         var traceData = TraceContext.getCurrentTraceData();
         var responseInfo = resolveResponseInfo(traceData, fallbackDefinition(throwable));
         applyResponseInfo(response, responseInfo);
-        recordException(traceData, response, throwable);
+        recordOtelSpanException(traceData, response, throwable);
         applyHeaders(response, traceData, responseInfo);
         flushQuietly(response);
     }
 
-    private void updateSpanStatus(TraceData traceData, int status) {
+    void recordOtelSpanException(Throwable throwable) {
+        var traceData = TraceContext.getCurrentTraceData();
+        recordOtelSpanException(traceData, null, throwable);
+    }
+
+    private THResponseInfo resolveResponseInfo(TraceData traceData, Throwable throwable) {
+        if (traceData == null) {
+            return fallbackResponseInfo(fallbackDefinition(throwable));
+        }
+        var serviceSpan = traceData.getServiceSpan();
+        if (serviceSpan == null) {
+            return fallbackResponseInfo(fallbackDefinition(throwable));
+        }
+        serviceSpan.getMetadata().putValue(MetadataProperties.CALL_ERROR, throwable);
+        var definition = extractDefinition(serviceSpan, throwable);
+        serviceSpan.getMetadata().putValue(MetadataProperties.ERROR_DEFINITION, definition);
+        var responseInfo = THProviderErrorMapper.getResponseInfo(serviceSpan);
+        serviceSpan.getMetadata().putValue(THMetadataProperties.TH_RESPONSE_INFO, responseInfo);
+        return responseInfo;
+    }
+
+    private THResponseInfo resolveResponseInfo(TraceData traceData, WErrorDefinition definition) {
+        if (traceData == null) {
+            return fallbackResponseInfo(definition);
+        }
+        var serviceSpan = traceData.getServiceSpan();
+        if (serviceSpan == null) {
+            return fallbackResponseInfo(definition);
+        }
+        serviceSpan.getMetadata().putValue(MetadataProperties.ERROR_DEFINITION, definition);
+        var responseInfo = THProviderErrorMapper.getResponseInfo(serviceSpan);
+        serviceSpan.getMetadata().putValue(THMetadataProperties.TH_RESPONSE_INFO, responseInfo);
+        return responseInfo;
+    }
+
+    private void applyResponseInfo(HttpServletResponse response, THResponseInfo responseInfo) {
+        if (response == null || response.isCommitted() || responseInfo == null) {
+            return;
+        }
+        if (responseInfo.getStatus() > 0) {
+            response.setStatus(responseInfo.getStatus());
+        }
+    }
+
+    private void recordOtelSpanStatus(TraceData traceData, int status) {
         var span = extractSpan(traceData);
         if (span == null || !span.getSpanContext().isValid()) {
             return;
@@ -73,12 +117,12 @@ public final class WoodyTraceLifecycleHandler {
         }
     }
 
-    private void recordException(TraceData traceData, HttpServletResponse response, Throwable throwable) {
+    private void recordOtelSpanException(TraceData traceData, HttpServletResponse response, Throwable throwable) {
         var span = extractSpan(traceData);
         if (span == null || !span.getSpanContext().isValid()) {
             return;
         }
-        var status = response.getStatus();
+        var status = response != null ? response.getStatus() : 0;
         if (status > 0) {
             span.setAttribute(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, status);
         }
@@ -126,34 +170,15 @@ public final class WoodyTraceLifecycleHandler {
         }
     }
 
-    private THResponseInfo resolveResponseInfo(TraceData traceData, Throwable throwable) {
-        if (traceData == null) {
-            return fallbackResponseInfo(fallbackDefinition(throwable));
+    private void flushQuietly(HttpServletResponse response) {
+        if (response == null) {
+            return;
         }
-        var serviceSpan = traceData.getServiceSpan();
-        if (serviceSpan == null) {
-            return fallbackResponseInfo(fallbackDefinition(throwable));
+        try {
+            response.flushBuffer();
+        } catch (Exception exception) {
+            log.debug("Failed to flush response buffer", exception);
         }
-        serviceSpan.getMetadata().putValue(MetadataProperties.CALL_ERROR, throwable);
-        var definition = extractDefinition(serviceSpan, throwable);
-        serviceSpan.getMetadata().putValue(MetadataProperties.ERROR_DEFINITION, definition);
-        var responseInfo = THProviderErrorMapper.getResponseInfo(serviceSpan);
-        serviceSpan.getMetadata().putValue(THMetadataProperties.TH_RESPONSE_INFO, responseInfo);
-        return responseInfo;
-    }
-
-    private THResponseInfo resolveResponseInfo(TraceData traceData, WErrorDefinition definition) {
-        if (traceData == null) {
-            return fallbackResponseInfo(definition);
-        }
-        var serviceSpan = traceData.getServiceSpan();
-        if (serviceSpan == null) {
-            return fallbackResponseInfo(definition);
-        }
-        serviceSpan.getMetadata().putValue(MetadataProperties.ERROR_DEFINITION, definition);
-        var responseInfo = THProviderErrorMapper.getResponseInfo(serviceSpan);
-        serviceSpan.getMetadata().putValue(THMetadataProperties.TH_RESPONSE_INFO, responseInfo);
-        return responseInfo;
     }
 
     private WErrorDefinition extractDefinition(ContextSpan serviceSpan, Throwable throwable) {
@@ -181,15 +206,6 @@ public final class WoodyTraceLifecycleHandler {
             definition.setErrorMessage(WErrorType.UNEXPECTED_ERROR.getKey());
         }
         return definition;
-    }
-
-    private void applyResponseInfo(HttpServletResponse response, THResponseInfo responseInfo) {
-        if (response == null || response.isCommitted() || responseInfo == null) {
-            return;
-        }
-        if (responseInfo.getStatus() > 0) {
-            response.setStatus(responseInfo.getStatus());
-        }
     }
 
     private THResponseInfo fallbackResponseInfo(WErrorDefinition definition) {
@@ -258,26 +274,13 @@ public final class WoodyTraceLifecycleHandler {
         });
     }
 
-    private static void copyHeader(HttpHeaders source, String sourceName, String targetName, HttpHeaders target) {
+    private void copyHeader(HttpHeaders source, String sourceName, String targetName, HttpHeaders target) {
         if (sourceName == null || targetName == null) {
             return;
         }
         var values = source.get(sourceName);
         if (values != null && !values.isEmpty()) {
             target.put(targetName, new ArrayList<>(values));
-        }
-    }
-
-    private static void flushQuietly(HttpServletResponse response) {
-        if (response == null) {
-            return;
-        }
-        try {
-            response.flushBuffer();
-        } catch (Exception exception) {
-            if (log.isDebugEnabled()) {
-                log.debug("Failed to flush response buffer", exception);
-            }
         }
     }
 }
