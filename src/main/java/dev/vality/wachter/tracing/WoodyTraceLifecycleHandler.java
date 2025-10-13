@@ -1,5 +1,6 @@
 package dev.vality.wachter.tracing;
 
+import dev.vality.wachter.config.properties.TracingProperties.ResponseHeaderMode;
 import dev.vality.woody.api.flow.error.WErrorDefinition;
 import dev.vality.woody.api.flow.error.WErrorSource;
 import dev.vality.woody.api.flow.error.WErrorType;
@@ -22,12 +23,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static dev.vality.wachter.constants.TraceHeadersConstants.ExternalHeaders.*;
 import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 
 @Slf4j
 public final class WoodyTraceLifecycleHandler {
 
     private final THProviderErrorMapper errorMapper = new THProviderErrorMapper();
+    private final ResponseHeaderMode responseHeaderMode;
+
+    public WoodyTraceLifecycleHandler(ResponseHeaderMode responseHeaderMode) {
+        this.responseHeaderMode = responseHeaderMode == null ? ResponseHeaderMode.WOODY : responseHeaderMode;
+    }
 
     void handleSuccess(HttpServletResponse response) {
         var traceData = TraceContext.getCurrentTraceData();
@@ -109,11 +116,14 @@ public final class WoodyTraceLifecycleHandler {
         addHeader(headers, OTEL_TRACE_PARENT, traceData.getInboundTraceParent());
         addHeader(headers, OTEL_TRACE_STATE, traceData.getInboundTraceState());
 
-        headers.forEach((name, values) -> {
-            if (values != null) {
-                response.setHeader(name, join(values));
+        switch (responseHeaderMode) {
+            case OFF -> {
+                // no headers
             }
-        });
+            case WOODY -> applyWoodyHeaders(response, headers);
+            case X_WOODY -> applyXWoodyHeaders(response, headers);
+            case HTTP -> applyHttpHeaders(response, headers);
+        }
     }
 
     private THResponseInfo resolveResponseInfo(TraceData traceData, Throwable throwable) {
@@ -211,6 +221,51 @@ public final class WoodyTraceLifecycleHandler {
             return values.getFirst();
         }
         return String.join(",", new ArrayList<>(values));
+    }
+
+    private static void applyWoodyHeaders(HttpServletResponse response, HttpHeaders headers) {
+        headers.forEach((name, values) -> {
+            if (values != null) {
+                response.setHeader(name, join(values));
+            }
+        });
+    }
+
+    private static void applyXWoodyHeaders(HttpServletResponse response, HttpHeaders headers) {
+        var normalized = TraceContextHeadersNormalizer.normalizeResponseHeaders(headers);
+        normalized.forEach((name, values) -> {
+            if (values != null) {
+                response.setHeader(name, join(values));
+            }
+        });
+    }
+
+    private void applyHttpHeaders(HttpServletResponse response, HttpHeaders headers) {
+        var httpHeaders = new HttpHeaders();
+        copyHeader(headers, OTEL_TRACE_PARENT, OTEL_TRACE_PARENT, httpHeaders);
+        copyHeader(headers, OTEL_TRACE_STATE, OTEL_TRACE_STATE, httpHeaders);
+        copyHeader(headers, WOODY_META_REQUEST_ID, X_REQUEST_ID, httpHeaders);
+        copyHeader(headers, WOODY_META_REQUEST_DEADLINE, X_REQUEST_DEADLINE, httpHeaders);
+        copyHeader(headers, WOODY_META_REQUEST_INVOICE_ID, X_INVOICE_ID, httpHeaders);
+        if (response.getStatus() >= 400) {
+            copyHeader(headers, WOODY_ERROR_CLASS, X_ERROR_CLASS, httpHeaders);
+            copyHeader(headers, WOODY_ERROR_REASON, X_ERROR_REASON, httpHeaders);
+        }
+        httpHeaders.forEach((name, values) -> {
+            if (values != null) {
+                response.setHeader(name, join(values));
+            }
+        });
+    }
+
+    private static void copyHeader(HttpHeaders source, String sourceName, String targetName, HttpHeaders target) {
+        if (sourceName == null || targetName == null) {
+            return;
+        }
+        var values = source.get(sourceName);
+        if (values != null && !values.isEmpty()) {
+            target.put(targetName, new ArrayList<>(values));
+        }
     }
 
     private static void flushQuietly(HttpServletResponse response) {

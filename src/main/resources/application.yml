@@ -46,6 +46,9 @@ info:
 woody-http-bridge:
   tracing:
     trace-restore: true
+    response-header-mode: X_WOODY
+    endpoints:
+      - path: /${wachter.endpoint}
 
 wachter:
   endpoint: ${wachter.endpoint}
