@@ -1,5 +1,7 @@
 package dev.vality.wachter.config;
 
+import dev.vality.wachter.config.properties.TracingProperties;
+import dev.vality.wachter.tracing.WoodyTraceLifecycleHandler;
 import dev.vality.wachter.tracing.WoodyTracingFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -51,8 +53,10 @@ public class WebConfig {
     }
 
     @Bean
-    public FilterRegistrationBean<WoodyTracingFilter> woodyTracingFilter() {
-        var registrationBean = new FilterRegistrationBean<>(new WoodyTracingFilter(serverPort, wachterEndpoint));
+    public FilterRegistrationBean<WoodyTracingFilter> woodyTracingFilter(TracingProperties tracingProperties) {
+        var lifecycleHandler = new WoodyTraceLifecycleHandler();
+        var filter = new WoodyTracingFilter(serverPort, wachterEndpoint, tracingProperties, lifecycleHandler);
+        var registrationBean = new FilterRegistrationBean<>(filter);
         registrationBean.setOrder(-50);
         registrationBean.setName("woodyTracingFilter");
         registrationBean.addUrlPatterns(wachterEndpoint);

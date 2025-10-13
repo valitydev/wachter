@@ -43,6 +43,10 @@ info:
   version: '@project.version@'
   stage: dev
 
+woody-http-bridge:
+  tracing:
+    trace-restore: true
+
 wachter:
   endpoint: ${wachter.endpoint}
   auth:

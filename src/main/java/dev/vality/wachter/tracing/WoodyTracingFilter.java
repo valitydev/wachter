@@ -1,15 +1,14 @@
 package dev.vality.wachter.tracing;
 
+import dev.vality.wachter.config.properties.TracingProperties;
 import dev.vality.woody.api.flow.WFlow;
-import dev.vality.woody.api.trace.context.TraceContext;
-import io.opentelemetry.semconv.HttpAttributes;
+import dev.vality.woody.api.flow.error.WRuntimeException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -20,9 +19,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static dev.vality.wachter.config.WebConfig.getRequestPath;
-import static dev.vality.wachter.constants.TraceHeadersConstants.WOODY_TRACE_ID;
-import static io.opentelemetry.api.trace.StatusCode.ERROR;
-import static io.opentelemetry.api.trace.StatusCode.OK;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -36,6 +32,8 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
 
     private final int serverPort;
     private final String wachterEndpoint;
+    private final TracingProperties tracingProperties;
+    private final WoodyTraceLifecycleHandler woodyTraceLifecycleHandler;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -43,23 +41,35 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) {
         var requestPath = getRequestPath(request);
         if ((request.getLocalPort() == serverPort) && requestPath.equals(wachterEndpoint)) {
-            var normalized = TraceContextHeadersNormalizer.normalize(request);
-            var validated = TraceContextHeadersValidation.validate(normalized);
-            MDC.put(WOODY_TRACE_ID, validated.get(WOODY_TRACE_ID) != null ? validated.get(WOODY_TRACE_ID) : "");
-            log.info("-> Received {} {} | params: {}, headers: {}", request.getMethod(), getRequestPath(request),
-                    extractParams(request), sanitizeHeaders(request));
-            MDC.remove(WOODY_TRACE_ID);
-            var restoredTraceData = TraceContextRestorer.restoreTraceData(validated);
-
-            WFlow.create(() -> doFilterWithTraceHandling(request, response, filterChain), restoredTraceData).run();
-
-            MDC.put(WOODY_TRACE_ID, validated.get(WOODY_TRACE_ID) != null ? validated.get(WOODY_TRACE_ID) : "");
-            log.info("<- Sent {} {} | status: {}, headers: {}", request.getMethod(), getRequestPath(request),
-                    response.getStatus(), sanitizeResponseHeaders(response));
-            MDC.remove(WOODY_TRACE_ID);
+            if (tracingProperties.isTraceRestore()) {
+                handleWithTraceRestore(request, response, filterChain);
+            } else {
+                handleLightweightRequest(request, response, filterChain);
+            }
             return;
         }
         doFilter(request, response, filterChain);
+    }
+
+    private void handleWithTraceRestore(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        FilterChain filterChain) {
+        var normalized = TraceContextHeadersNormalizer.normalize(request);
+        var headersForTrace = TraceContextHeadersValidation.validate(normalized);
+        var restoredTraceData = TraceContextRestorer.restoreTraceData(headersForTrace);
+        WFlow.create(() -> {
+            logReceived(request);
+            doFilterWithTraceHandling(request, response, filterChain);
+            logSent(request, response);
+        }, restoredTraceData).run();
+    }
+
+    private void handleLightweightRequest(HttpServletRequest request,
+                                          HttpServletResponse response,
+                                          FilterChain filterChain) {
+        logReceived(request);
+        new WFlow().createServiceFork(() -> doFilter(request, response, filterChain)).run();
+        logSent(request, response);
     }
 
     @SneakyThrows
@@ -67,46 +77,29 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    @SneakyThrows
     private void doFilterWithTraceHandling(HttpServletRequest request,
                                            HttpServletResponse response,
                                            FilterChain filterChain) {
-        var traceData = TraceContext.getCurrentTraceData();
-        var span = traceData != null ? traceData.getOtelSpan() : null;
         try {
             filterChain.doFilter(request, response);
-            recordResponse(span, response);
-        } catch (Throwable t) {
-            recordException(span, response, t);
-            throw t;
+            woodyTraceLifecycleHandler.handleSuccess(response);
+        } catch (WRuntimeException woodyError) {
+            log.warn("Handled Woody exception during request processing", woodyError);
+            woodyTraceLifecycleHandler.handleWoodyException(response, woodyError);
+        } catch (Throwable unexpected) {
+            log.error("Unhandled exception during request processing", unexpected);
+            woodyTraceLifecycleHandler.handleUnexpectedError(response, unexpected);
         }
     }
 
-    private void recordResponse(io.opentelemetry.api.trace.Span span, HttpServletResponse response) {
-        if (span == null || !span.getSpanContext().isValid()) {
-            return;
-        }
-        var status = response.getStatus();
-        if (status > 0) {
-            span.setAttribute(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, status);
-            span.setStatus(status >= 500 ? ERROR : OK);
-        } else {
-            span.setStatus(OK);
-        }
+    private void logReceived(HttpServletRequest request) {
+        log.info("-> Received {} {} | params: {}, headers: {}", request.getMethod(), getRequestPath(request),
+                extractParams(request), sanitizeHeaders(request));
     }
 
-    private void recordException(io.opentelemetry.api.trace.Span span,
-                                 HttpServletResponse response,
-                                 Throwable throwable) {
-        if (span == null || !span.getSpanContext().isValid()) {
-            return;
-        }
-        var status = response.getStatus();
-        if (status > 0) {
-            span.setAttribute(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, status);
-        }
-        span.recordException(throwable);
-        span.setStatus(ERROR);
+    private void logSent(HttpServletRequest request, HttpServletResponse response) {
+        log.info("<- Sent {} {} | status: {}, headers: {}", request.getMethod(), getRequestPath(request),
+                response.getStatus(), sanitizeResponseHeaders(response));
     }
 
 
