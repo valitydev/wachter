@@ -45,14 +45,13 @@ info:
 
 woody-http-bridge:
   tracing:
-    request-header-mode: WOODY_OR_X_WOODY
-    response-header-mode: OFF
-    propagate-errors: false
     endpoints:
-      - path: /${wachter.endpoint}
+      - path: /wachter
+        port: ${server.port}
+        request-header-mode: WOODY_OR_X_WOODY
+        response-header-mode: OFF
 
 wachter:
-  endpoint: ${wachter.endpoint}
   auth:
     enabled: true
   serviceHeader: Service
