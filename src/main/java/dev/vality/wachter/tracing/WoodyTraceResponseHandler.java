@@ -27,36 +27,33 @@ import static dev.vality.wachter.constants.TraceHeadersConstants.ExternalHeaders
 import static dev.vality.wachter.constants.TraceHeadersConstants.*;
 
 @Slf4j
-public final class WoodyTraceLifecycleHandler {
+public final class WoodyTraceResponseHandler {
 
     private final THProviderErrorMapper errorMapper = new THProviderErrorMapper();
-    private final ResponseHeaderMode responseHeaderMode;
 
-    public WoodyTraceLifecycleHandler(ResponseHeaderMode responseHeaderMode) {
-        this.responseHeaderMode = responseHeaderMode == null ? ResponseHeaderMode.WOODY : responseHeaderMode;
-    }
-
-    void handleSuccess(HttpServletResponse response) {
+    void handleSuccess(HttpServletResponse response, ResponseHeaderMode responseHeaderMode) {
         var traceData = TraceContext.getCurrentTraceData();
         recordOtelSpanStatus(traceData, response.getStatus());
-        applyHeaders(response, traceData, null);
+        applyHeaders(response, traceData, null, responseHeaderMode);
     }
 
-    void handleWoodyException(HttpServletResponse response, Throwable throwable) {
+    void handleWoodyException(HttpServletResponse response, Throwable throwable,
+                              ResponseHeaderMode responseHeaderMode) {
         var traceData = TraceContext.getCurrentTraceData();
         var responseInfo = resolveResponseInfo(traceData, throwable);
         applyResponseInfo(response, responseInfo);
         recordOtelSpanException(traceData, response, throwable);
-        applyHeaders(response, traceData, responseInfo);
+        applyHeaders(response, traceData, responseInfo, responseHeaderMode);
         flushQuietly(response);
     }
 
-    void handleUnexpectedError(HttpServletResponse response, Throwable throwable) {
+    void handleUnexpectedError(HttpServletResponse response, Throwable throwable,
+                               ResponseHeaderMode responseHeaderMode) {
         var traceData = TraceContext.getCurrentTraceData();
         var responseInfo = resolveResponseInfo(traceData, fallbackDefinition(throwable));
         applyResponseInfo(response, responseInfo);
         recordOtelSpanException(traceData, response, throwable);
-        applyHeaders(response, traceData, responseInfo);
+        applyHeaders(response, traceData, responseInfo, responseHeaderMode);
         flushQuietly(response);
     }
 
@@ -130,7 +127,10 @@ public final class WoodyTraceLifecycleHandler {
         span.setStatus(StatusCode.ERROR);
     }
 
-    private void applyHeaders(HttpServletResponse response, TraceData traceData, THResponseInfo responseInfo) {
+    private void applyHeaders(HttpServletResponse response,
+                              TraceData traceData,
+                              THResponseInfo responseInfo,
+                              ResponseHeaderMode responseHeaderMode) {
         if (response == null || response.isCommitted() || traceData == null) {
             return;
         }

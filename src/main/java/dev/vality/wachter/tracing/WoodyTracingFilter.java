@@ -1,6 +1,7 @@
 package dev.vality.wachter.tracing;
 
 import dev.vality.wachter.config.properties.TracingProperties;
+import dev.vality.wachter.config.properties.TracingProperties.TracePolicy;
 import dev.vality.woody.api.flow.WFlow;
 import dev.vality.woody.api.flow.error.WRuntimeException;
 import jakarta.servlet.FilterChain;
@@ -18,8 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static dev.vality.wachter.config.WebConfig.getRequestPath;
-
 @Slf4j
 @RequiredArgsConstructor
 public final class WoodyTracingFilter extends OncePerRequestFilter {
@@ -30,89 +29,75 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
             HttpHeaders.SET_COOKIE.toLowerCase(Locale.ROOT)
     );
 
-    private final int defaultServerPort;
-    private final String defaultEndpoint;
     private final TracingProperties tracingProperties;
-    private final WoodyTraceLifecycleHandler woodyTraceLifecycleHandler;
+    private final WoodyTraceResponseHandler woodyTraceResponseHandler;
 
     @Override
     @SneakyThrows
+    @SuppressWarnings("NullableProblems")
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
-        if (matchesConfiguredEndpoint(request)) {
-            switch (tracingProperties.getRequestHeaderMode()) {
-                case OFF -> handle(request, response, filterChain);
-                case WOODY_OR_X_WOODY -> handleWithTraceRestore(request, response, filterChain);
-            }
+        var path = getRequestPath(request);
+        var port = request.getLocalPort();
+        var policy = tracingProperties.resolvePolicy(port, path);
+        if (policy == null) {
+            filterChain.doFilter(request, response);
             return;
         }
-        filterChain.doFilter(request, response);
+        switch (policy.requestHeaderMode()) {
+            case OFF -> handleWithoutTraceRestore(request, response, filterChain, policy);
+            case WOODY_OR_X_WOODY -> handleWithTraceRestore(request, response, filterChain, policy);
+        }
     }
 
-    private boolean matchesConfiguredEndpoint(HttpServletRequest request) {
-        var port = request.getLocalPort();
-        var path = getRequestPath(request);
-        var endpoints = tracingProperties.getEndpoints();
-        if (endpoints == null || endpoints.isEmpty()) {
-            var matched = port == defaultServerPort && path.equals(defaultEndpoint);
-            log.debug("Tracing filter endpoint match (default) port={} path={} matched={}", port, path,
-                    matched);
-            return matched;
-        }
-        endpoints.forEach(endpoint -> log.debug("Tracing filter endpoint candidate port={} path={} -> "
-                        + "portMatch={} pathMatch={}",
-                endpoint.getPort(), endpoint.getPath(), matchesPort(endpoint.getPort(), port),
-                matchesPath(endpoint.getPath(), path)));
-        var matched = endpoints.stream().anyMatch(endpoint -> matchesPort(endpoint.getPort(), port)
-                && matchesPath(endpoint.getPath(), path));
-        log.debug("Tracing filter endpoint match port={} path={} matched={} endpoints={}", port, path, matched,
-                endpoints);
-        return matched;
+    private void handleWithoutTraceRestore(HttpServletRequest request,
+                                           HttpServletResponse response,
+                                           FilterChain filterChain,
+                                           TracePolicy policy) {
+        new WFlow().createServiceFork(() -> {
+                    logReceived(request);
+                    doFilterWithTraceHandling(request, response, filterChain, policy);
+                    logSent(request, response);
+                })
+                .run();
     }
 
     private void handleWithTraceRestore(HttpServletRequest request,
                                         HttpServletResponse response,
-                                        FilterChain filterChain) {
+                                        FilterChain filterChain,
+                                        TracePolicy policy) {
         var normalized = TraceContextHeadersNormalizer.normalize(request);
         var headersForTrace = TraceContextHeadersValidation.validate(normalized);
         var restoredTraceData = TraceContextRestorer.restoreTraceData(headersForTrace);
         WFlow.create(() -> {
                     logReceived(request);
-                    doFilterWithTraceHandling(request, response, filterChain);
+                    doFilterWithTraceHandling(request, response, filterChain, policy);
                     logSent(request, response);
                 }, restoredTraceData)
-                .run();
-    }
-
-    private void handle(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
-        new WFlow().createServiceFork(() -> {
-                    logReceived(request);
-                    doFilterWithTraceHandling(request, response, filterChain);
-                    logSent(request, response);
-                })
                 .run();
     }
 
     @SneakyThrows
     private void doFilterWithTraceHandling(HttpServletRequest request,
                                            HttpServletResponse response,
-                                           FilterChain filterChain) {
+                                           FilterChain filterChain,
+                                           TracePolicy policy) {
         try {
             filterChain.doFilter(request, response);
-            woodyTraceLifecycleHandler.handleSuccess(response);
+            woodyTraceResponseHandler.handleSuccess(response, policy.responseHeaderMode());
         } catch (WRuntimeException woodyError) {
             log.warn("Handled Woody exception during request processing", woodyError);
-            woodyTraceLifecycleHandler.recordOtelSpanException(woodyError);
-            if (tracingProperties.shouldPropagateErrors()) {
+            if (policy.propagateErrors()) {
+                woodyTraceResponseHandler.recordOtelSpanException(woodyError);
                 throw woodyError;
             }
-            woodyTraceLifecycleHandler.handleWoodyException(response, woodyError);
+            woodyTraceResponseHandler.handleWoodyException(response, woodyError, policy.responseHeaderMode());
         } catch (Throwable unexpected) {
             log.error("Unhandled exception during request processing", unexpected);
-            woodyTraceLifecycleHandler.recordOtelSpanException(unexpected);
-            if (tracingProperties.shouldPropagateErrors()) {
+            if (policy.propagateErrors()) {
+                woodyTraceResponseHandler.recordOtelSpanException(unexpected);
                 throw unexpected;
             }
-            woodyTraceLifecycleHandler.handleUnexpectedError(response, unexpected);
+            woodyTraceResponseHandler.handleUnexpectedError(response, unexpected, policy.responseHeaderMode());
         }
     }
 
@@ -124,17 +109,6 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
     private void logSent(HttpServletRequest request, HttpServletResponse response) {
         log.info("<- Sent {} {} | status: {}, headers: {}", request.getMethod(), getRequestPath(request),
                 response.getStatus(), sanitizeResponseHeaders(response));
-    }
-
-    private boolean matchesPort(Integer configuredPort, int actualPort) {
-        return configuredPort == null || configuredPort == actualPort;
-    }
-
-    private boolean matchesPath(String configuredPath, String actualPath) {
-        if (configuredPath == null || configuredPath.isBlank()) {
-            return true;
-        }
-        return actualPath.equals(configuredPath);
     }
 
     public static String extractParams(HttpServletRequest servletRequest) {
@@ -185,5 +159,17 @@ public final class WoodyTracingFilter extends OncePerRequestFilter {
             }
         });
         return headers;
+    }
+
+    private static String getRequestPath(HttpServletRequest request) {
+        var servletPath = request.getServletPath();
+        if (servletPath != null && !servletPath.isBlank()) {
+            return servletPath;
+        }
+        var requestPath = request.getRequestURI();
+        if (requestPath != null && !requestPath.isBlank()) {
+            return requestPath;
+        }
+        return "";
     }
 }
