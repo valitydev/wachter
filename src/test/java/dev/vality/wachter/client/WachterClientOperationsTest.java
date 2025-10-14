@@ -19,7 +19,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
-import static dev.vality.wachter.constants.TraceHeadersConstants.ExternalHeaders.X_WOODY_TRACE_ID;
+import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.ExternalHeaders.X_WOODY_TRACE_ID;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;

@@ -1,14 +1,16 @@
 package dev.vality.wachter.tracing;
 
-import dev.vality.wachter.config.properties.TracingProperties;
-import dev.vality.wachter.config.properties.TracingProperties.Endpoint;
-import dev.vality.wachter.config.properties.TracingProperties.RequestHeaderMode;
-import dev.vality.wachter.config.properties.TracingProperties.ResponseHeaderMode;
 import dev.vality.woody.api.flow.error.WErrorDefinition;
 import dev.vality.woody.api.flow.error.WErrorSource;
 import dev.vality.woody.api.flow.error.WErrorType;
 import dev.vality.woody.api.flow.error.WRuntimeException;
 import dev.vality.woody.api.trace.context.TraceContext;
+import dev.vality.woody.http.bridge.properties.TracingProperties;
+import dev.vality.woody.http.bridge.properties.TracingProperties.Endpoint;
+import dev.vality.woody.http.bridge.properties.TracingProperties.RequestHeaderMode;
+import dev.vality.woody.http.bridge.properties.TracingProperties.ResponseHeaderMode;
+import dev.vality.woody.http.bridge.tracing.WoodyTraceResponseHandler;
+import dev.vality.woody.http.bridge.tracing.WoodyTracingFilter;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -22,8 +24,8 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import static dev.vality.wachter.constants.TraceHeadersConstants.ExternalHeaders.*;
-import static dev.vality.wachter.constants.TraceHeadersConstants.*;
+import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.ExternalHeaders.*;
+import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class WoodyTracingFilterTest {

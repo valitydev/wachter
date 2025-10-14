@@ -3,6 +3,7 @@ package dev.vality.wachter.tracing;
 import dev.vality.woody.api.flow.WFlow;
 import dev.vality.woody.api.trace.TraceData;
 import dev.vality.woody.api.trace.context.TraceContext;
+import dev.vality.woody.http.bridge.tracing.TraceContextHeadersExtractor;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
@@ -18,7 +19,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static dev.vality.wachter.constants.TraceHeadersConstants.*;
+import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TraceContextHeadersExtractorTest {

@@ -2,6 +2,8 @@ package dev.vality.wachter.tracing;
 
 import dev.vality.woody.api.flow.WFlow;
 import dev.vality.woody.api.trace.context.TraceContext;
+import dev.vality.woody.http.bridge.tracing.TraceContextHeadersExtractor;
+import dev.vality.woody.http.bridge.tracing.TraceContextRestorer;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -15,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static dev.vality.wachter.constants.TraceHeadersConstants.*;
+import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TraceContextPipelineTest {

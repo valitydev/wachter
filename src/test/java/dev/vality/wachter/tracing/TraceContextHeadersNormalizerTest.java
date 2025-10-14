@@ -1,7 +1,8 @@
 package dev.vality.wachter.tracing;
 
-import dev.vality.wachter.security.JwtTokenDetailsExtractor;
-import dev.vality.wachter.security.JwtTokenDetailsExtractor.JwtTokenDetails;
+import dev.vality.woody.http.bridge.tracing.TraceContextHeadersNormalizer;
+import dev.vality.woody.http.bridge.util.JwtTokenDetailsExtractor;
+import dev.vality.woody.http.bridge.util.JwtTokenDetailsExtractor.JwtTokenDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static dev.vality.wachter.constants.TraceHeadersConstants.*;
+import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
