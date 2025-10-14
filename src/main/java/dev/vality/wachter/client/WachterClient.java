@@ -1,12 +1,13 @@
 package dev.vality.wachter.client;
 
-import dev.vality.wachter.tracing.TraceContextHeadersExtractor;
-import dev.vality.wachter.tracing.TraceContextHeadersNormalizer;
+import dev.vality.woody.http.bridge.tracing.TraceContextHeadersExtractor;
+import dev.vality.woody.http.bridge.tracing.TraceContextHeadersNormalizer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestClient;
@@ -58,5 +59,8 @@ public class WachterClient {
         } catch (IllegalArgumentException ex) {
             return HttpMethod.POST;
         }
+    }
+
+    public record WachterClientResponse(HttpStatusCode statusCode, HttpHeaders headers, byte[] body) {
     }
 }
