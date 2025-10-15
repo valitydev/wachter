@@ -27,5 +27,4 @@ public class WachterProperties {
         private String url;
 
     }
-
 }

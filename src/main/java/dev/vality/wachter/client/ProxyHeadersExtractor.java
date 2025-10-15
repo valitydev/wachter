@@ -1,6 +1,6 @@
 package dev.vality.wachter.client;
 
-import dev.vality.wachter.constants.TraceHeadersConstants;
+import dev.vality.woody.http.bridge.tracing.TraceHeadersConstants;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpHeaders;

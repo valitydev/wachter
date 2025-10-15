@@ -1,11 +1,10 @@
 package dev.vality.wachter.service;
 
 import dev.vality.wachter.client.WachterClient;
-import dev.vality.wachter.client.WachterClientResponse;
 import dev.vality.wachter.mapper.ServiceMapper;
 import dev.vality.wachter.security.AccessData;
 import dev.vality.wachter.security.AccessService;
-import dev.vality.wachter.security.JwtTokenDetailsExtractor;
+import dev.vality.woody.http.bridge.util.JwtTokenDetailsExtractor;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -14,6 +13,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+
+import static dev.vality.wachter.client.WachterClient.WachterClientResponse;
 
 @RequiredArgsConstructor
 @Service

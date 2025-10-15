@@ -1,7 +1,6 @@
 package dev.vality.wachter.controller;
 
 import dev.vality.wachter.client.WachterClient;
-import dev.vality.wachter.client.WachterClientResponse;
 import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
 import dev.vality.wachter.testutil.TMessageUtil;
 import lombok.SneakyThrows;
@@ -19,7 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static dev.vality.wachter.constants.TraceHeadersConstants.*;
+import static dev.vality.wachter.client.WachterClient.WachterClientResponse;
+import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.*;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
