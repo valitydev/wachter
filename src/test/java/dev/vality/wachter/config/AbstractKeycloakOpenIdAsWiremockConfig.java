@@ -21,7 +21,12 @@ import java.security.PrivateKey;
                 "server.port=8083",
                 "spring.security.oauth2.resourceserver.url=${wiremock.server.baseUrl}",
                 "spring.security.oauth2.resourceserver.jwt.issuer-uri=${wiremock.server.baseUrl}/auth/realms/" +
-                        "${spring.security.oauth2.resourceserver.jwt.realm}"})
+                        "${spring.security.oauth2.resourceserver.jwt.realm}",
+                "woody-http-bridge.tracing.endpoints[0].path=/wachter",
+                "woody-http-bridge.tracing.endpoints[0].port=8083",
+                "woody-http-bridge.tracing.endpoints[0].request-header-mode: WOODY_OR_X_WOODY",
+                "woody-http-bridge.tracing.endpoints[0].response-header-mode: OFF",
+        })
 @AutoConfigureMockMvc
 @EnableWireMock
 @ExtendWith(SpringExtension.class)

@@ -1,20 +1,18 @@
 package dev.vality.wachter.client;
 
-import dev.vality.wachter.tracing.TraceContextHeadersExtractor;
-import dev.vality.wachter.tracing.TraceContextHeadersNormalizer;
+import dev.vality.woody.http.bridge.tracing.TraceContextExtractor;
+import dev.vality.woody.http.bridge.tracing.TraceContextHeadersNormalizer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestClient;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 @Slf4j
 @Component
@@ -29,7 +27,7 @@ public class WachterClient {
         var httpMethod = resolveMethod(servletRequest);
 
         var proxyHeaders = ProxyHeadersExtractor.extractHeaders(servletRequest);
-        var traceHeaders = TraceContextHeadersExtractor.extractHeaders();
+        var traceHeaders = TraceContextExtractor.extractHeaders();
 
         var httpHeaders = new HttpHeaders();
         proxyHeaders.forEach(httpHeaders::addAll);
@@ -61,5 +59,8 @@ public class WachterClient {
         } catch (IllegalArgumentException ex) {
             return HttpMethod.POST;
         }
+    }
+
+    public record WachterClientResponse(HttpStatusCode statusCode, HttpHeaders headers, byte[] body) {
     }
 }

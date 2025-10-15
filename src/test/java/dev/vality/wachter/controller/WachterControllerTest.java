@@ -1,7 +1,6 @@
 package dev.vality.wachter.controller;
 
 import dev.vality.wachter.client.WachterClient;
-import dev.vality.wachter.client.WachterClientResponse;
 import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
 import dev.vality.wachter.testutil.TMessageUtil;
 import lombok.SneakyThrows;
@@ -19,7 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static dev.vality.wachter.constants.TraceHeadersConstants.*;
+import static dev.vality.wachter.client.WachterClient.WachterClientResponse;
+import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.*;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -63,8 +63,8 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
                         .header("Service", "Domain")
-                        .header(X_REQUEST_ID, randomUUID())
-                        .header(X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .header(ExternalHeaders.X_REQUEST_ID, randomUUID())
+                        .header(ExternalHeaders.X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
@@ -79,8 +79,8 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
                         .header("Service", "Domain")
-                        .header(X_REQUEST_ID, randomUUID())
-                        .header(X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .header(ExternalHeaders.X_REQUEST_ID, randomUUID())
+                        .header(ExternalHeaders.X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
@@ -95,8 +95,8 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
                         .header("Service", "Domain")
-                        .header(X_REQUEST_ID, randomUUID())
-                        .header(X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .header(ExternalHeaders.X_REQUEST_ID, randomUUID())
+                        .header(ExternalHeaders.X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
                         .header(WOODY_PARENT_ID, "parent")
                         .header(WOODY_TRACE_ID, "trace")
                         .header(WOODY_SPAN_ID, "span")
@@ -115,12 +115,12 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
                         .header("Service", "Domain")
-                        .header(X_REQUEST_ID, randomUUID())
-                        .header(X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
-                        .header(X_WOODY_PARENT_ID, "parent")
-                        .header(X_WOODY_TRACE_ID, "trace")
-                        .header(X_WOODY_SPAN_ID, "span")
-                        .header(X_WOODY_DEADLINE, "deadline")
+                        .header(ExternalHeaders.X_REQUEST_ID, randomUUID())
+                        .header(ExternalHeaders.X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .header(ExternalHeaders.X_WOODY_PARENT_ID, "parent")
+                        .header(ExternalHeaders.X_WOODY_TRACE_ID, "trace")
+                        .header(ExternalHeaders.X_WOODY_SPAN_ID, "span")
+                        .header(ExternalHeaders.X_WOODY_DEADLINE, "deadline")
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
@@ -139,8 +139,8 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
                         .header("Service", "Domain")
-                        .header(X_REQUEST_ID, randomUUID())
-                        .header(X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
+                        .header(ExternalHeaders.X_REQUEST_ID, randomUUID())
+                        .header(ExternalHeaders.X_REQUEST_DEADLINE, Instant.now().plus(1, ChronoUnit.DAYS).toString())
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().isBadGateway())

@@ -7,7 +7,7 @@ management:
     port: ${management.port}
   metrics:
     tags:
-      application: '@project.name@'
+      application: ${project.name}
   endpoint:
     health:
       show-details: always
@@ -26,7 +26,7 @@ management:
 
 spring:
   application:
-    name: '@project.name@'
+    name: ${project.name}
   output:
     ansi:
       enabled: always
@@ -39,12 +39,8 @@ spring:
           issuer-uri: >
             ${spring.security.oauth2.resourceserver.url}/auth/realms/
             ${spring.security.oauth2.resourceserver.jwt.realm}
-info:
-  version: '@project.version@'
-  stage: dev
 
 wachter:
-  endpoint: ${wachter.endpoint}
   auth:
     enabled: true
   serviceHeader: Service
@@ -128,20 +124,21 @@ wachter:
       name: DMTClient
       url: http://dmt.default:8022/v1/domain/repository_client
 
+auth:
+  enabled: true
 
-http-client:
-  connectTimeout: 10000
-  connectionRequestTimeout: 10000
-  socketTimeout: 10000
-  maxTotalPooling: 200
-  defaultMaxPerRoute: 200
-
-auth.enabled: true
+woody-http-bridge:
+  tracing:
+    endpoints:
+      - path: /wachter
+        port: ${server.port}
+        request-header-mode: WOODY_OR_X_WOODY
+        response-header-mode: OFF
 
 otel:
+  enabled: true
   resource: http://localhost:4318/v1/traces
   timeout: 60000
-  enabled: true
 
 http:
   requestTimeout: 60000
