@@ -1,6 +1,6 @@
 package dev.vality.wachter.client;
 
-import dev.vality.woody.http.bridge.tracing.TraceContextHeadersExtractor;
+import dev.vality.woody.http.bridge.tracing.TraceContextExtractor;
 import dev.vality.woody.http.bridge.tracing.TraceContextHeadersNormalizer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class WachterClient {
         var httpMethod = resolveMethod(servletRequest);
 
         var proxyHeaders = ProxyHeadersExtractor.extractHeaders(servletRequest);
-        var traceHeaders = TraceContextHeadersExtractor.extractHeaders();
+        var traceHeaders = TraceContextExtractor.extractHeaders();
 
         var httpHeaders = new HttpHeaders();
         proxyHeaders.forEach(httpHeaders::addAll);
