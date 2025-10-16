@@ -15,7 +15,7 @@
 
     <properties>
         <woody.version>2.0.12</woody.version>
-        <woody-http-bridge.version>0.0.9</woody-http-bridge.version>
+        <woody-http-bridge.version>0.0.10</woody-http-bridge.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>21</java.version>
