@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static dev.vality.wachter.constants.TraceHeadersConstants.*;
+import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestPropertySource(properties = {
@@ -123,17 +123,17 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                     headers.set("Service", "Deanonimus");
 
                     // Woody tracing headers
-                    headers.set(X_WOODY_TRACE_ID, traceId);
-                    headers.set(X_WOODY_SPAN_ID, spanId);
-                    headers.set(X_WOODY_PARENT_ID, parentId);
-                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "id", "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
-                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "username", "noreply@valitydev.com");
-                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "email", "noreply@valitydev.com");
-                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "realm", "internal");
+                    headers.set(ExternalHeaders.X_WOODY_TRACE_ID, traceId);
+                    headers.set(ExternalHeaders.X_WOODY_SPAN_ID, spanId);
+                    headers.set(ExternalHeaders.X_WOODY_PARENT_ID, parentId);
+                    headers.set(ExternalHeaders.X_WOODY_META_ID, "b54a93c4-415d-4f33-a5e9-3608fd043ff4");
+                    headers.set(ExternalHeaders.X_WOODY_META_USERNAME, "noreply@valitydev.com");
+                    headers.set(ExternalHeaders.X_WOODY_META_EMAIL, "noreply@valitydev.com");
+                    headers.set(ExternalHeaders.X_WOODY_META_REALM, "internal");
 
                     // Request metadata
-                    headers.set(X_REQUEST_ID, requestId);
-                    headers.set(X_REQUEST_DEADLINE, deadline.toString());
+                    headers.set(ExternalHeaders.X_REQUEST_ID, requestId);
+                    headers.set(ExternalHeaders.X_REQUEST_DEADLINE, deadline.toString());
                     headers.set(OTEL_TRACE_PARENT, upstreamTraceparent);
                 })
                 .body(payload)
@@ -163,15 +163,14 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
         var jwtClaims = decodeJwtPayload(jwt);
         assertEquals(jwtClaims.get("sub").asText(),
-                upstreamRequest.getHeader(WOODY_META_USER_IDENTITY_PREFIX + "id"));
+                upstreamRequest.getHeader(WOODY_META_ID));
         assertEquals(jwtClaims.get("preferred_username").asText(),
-                upstreamRequest.getHeader(WOODY_META_USER_IDENTITY_PREFIX + "username"));
+                upstreamRequest.getHeader(WOODY_META_USERNAME));
         assertEquals(jwtClaims.get("email").asText(),
-                upstreamRequest.getHeader(WOODY_META_USER_IDENTITY_PREFIX + "email"));
+                upstreamRequest.getHeader(WOODY_META_EMAIL));
         assertEquals(extractRealm(jwtClaims),
-                upstreamRequest.getHeader(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+                upstreamRequest.getHeader(WOODY_META_REALM));
 
-        assertNotNull(upstreamRequest.getHeader(OTEL_TRACE_PARENT));
         assertTrue(upstreamRequest.getHeader(OTEL_TRACE_PARENT).matches(TRACEPARENT_PATTERN));
 
         assertEquals(requestId, upstreamRequest.getHeader(WOODY_META_REQUEST_ID));
@@ -213,17 +212,17 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
                     // Mixed woody and x-woody headers
                     headers.set(WOODY_TRACE_ID, "GZvsthKQAAA");
-                    headers.set(X_WOODY_SPAN_ID, "GZvsthKQBBB");
+                    headers.set(ExternalHeaders.X_WOODY_SPAN_ID, "GZvsthKQBBB");
                     headers.set(WOODY_PARENT_ID, "parent-woody");
-                    headers.set(X_WOODY_DEADLINE, deadline.toString());
+                    headers.set(ExternalHeaders.X_WOODY_DEADLINE, deadline.toString());
 
                     // User identity in different formats
-                    headers.set(WOODY_META_USER_IDENTITY_PREFIX + "realm", "/woody-realm");
-                    headers.set(X_WOODY_META_USER_IDENTITY_PREFIX + "id", "header-user-id");
+                    headers.set(WOODY_META_REALM, "/woody-realm");
+                    headers.set(ExternalHeaders.X_WOODY_META_ID, "header-user-id");
 
                     // Request metadata
-                    headers.set(X_REQUEST_ID, "mixed-request-id");
-                    headers.set(X_REQUEST_DEADLINE, deadline.toString());
+                    headers.set(ExternalHeaders.X_REQUEST_ID, "mixed-request-id");
+                    headers.set(ExternalHeaders.X_REQUEST_DEADLINE, deadline.toString());
 
                     // Traceparent
                     headers.set(OTEL_TRACE_PARENT, "00-" + otelTraceId + "-9cfa814ae977266e-01");
@@ -247,13 +246,13 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         assertNotNull(upstreamRequest.getHeader(WOODY_DEADLINE));
 
         // User identity metadata should be sourced from JWT when present
-        assertEquals(jwtClaims.get("sub").asText(), upstreamRequest.getHeader(WOODY_META_USER_IDENTITY_PREFIX + "id"));
+        assertEquals(jwtClaims.get("sub").asText(), upstreamRequest.getHeader(WOODY_META_ID));
         assertEquals(jwtClaims.get("preferred_username").asText(),
-                upstreamRequest.getHeader(WOODY_META_USER_IDENTITY_PREFIX + "username"));
+                upstreamRequest.getHeader(WOODY_META_USERNAME));
         assertEquals(jwtClaims.get("email").asText(),
-                upstreamRequest.getHeader(WOODY_META_USER_IDENTITY_PREFIX + "email"));
+                upstreamRequest.getHeader(WOODY_META_EMAIL));
         assertEquals(extractRealm(jwtClaims),
-                upstreamRequest.getHeader(WOODY_META_USER_IDENTITY_PREFIX + "realm"));
+                upstreamRequest.getHeader(WOODY_META_REALM));
 
         // Traceparent should be preserved
         assertTrue(upstreamRequest.getHeader(OTEL_TRACE_PARENT).contains(otelTraceId));
@@ -279,8 +278,8 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .headers(headers -> {
                     headers.set("Authorization", "Bearer " + generateSimpleJwtWithRoles());
                     headers.set("Service", "Domain");
-                    headers.set(X_REQUEST_ID, UUID.randomUUID().toString());
-                    headers.set(X_REQUEST_DEADLINE, deadline.toString());
+                    headers.set(ExternalHeaders.X_REQUEST_ID, UUID.randomUUID().toString());
+                    headers.set(ExternalHeaders.X_REQUEST_DEADLINE, deadline.toString());
                     headers.set(HttpHeaders.TRANSFER_ENCODING, "chunked");
                     headers.set(HttpHeaders.CONNECTION, "keep-alive");
                     headers.set(HttpHeaders.TE, "trailers");
@@ -316,8 +315,8 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .headers(headers -> {
                     headers.set("Authorization", "Bearer " + generateSimpleJwtWithRoles());
                     headers.set("Service", "Domain");
-                    headers.set(X_REQUEST_ID, UUID.randomUUID().toString());
-                    headers.set(X_REQUEST_DEADLINE, deadline.toString());
+                    headers.set(ExternalHeaders.X_REQUEST_ID, UUID.randomUUID().toString());
+                    headers.set(ExternalHeaders.X_REQUEST_DEADLINE, deadline.toString());
                     headers.set(HttpHeaders.ORIGIN, origin);
                 })
                 .body(payload)
@@ -346,8 +345,8 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .headers(headers -> {
                     headers.set("Authorization", "Bearer " + generateSimpleJwtWithRoles());
                     headers.set("Service", "Domain");
-                    headers.set(X_REQUEST_ID, UUID.randomUUID().toString());
-                    headers.set(X_REQUEST_DEADLINE, deadline.toString());
+                    headers.set(ExternalHeaders.X_REQUEST_ID, UUID.randomUUID().toString());
+                    headers.set(ExternalHeaders.X_REQUEST_DEADLINE, deadline.toString());
                     headers.set(HttpHeaders.ORIGIN, origin);
                 })
                 .body(payload)
