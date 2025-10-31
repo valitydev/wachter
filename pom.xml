@@ -7,7 +7,7 @@
     <parent>
         <groupId>dev.vality</groupId>
         <artifactId>service-parent-pom</artifactId>
-        <version>3.1.8</version>
+        <version>3.1.9</version>
     </parent>
 
     <artifactId>wachter</artifactId>
@@ -20,7 +20,6 @@
         <server.port>8022</server.port>
         <management.port>8023</management.port>
         <exposed.ports>${server.port} ${management.port}</exposed.ports>
-        <shared-resources.version>3.0.1</shared-resources.version>
     </properties>
 
     <dependencies>
