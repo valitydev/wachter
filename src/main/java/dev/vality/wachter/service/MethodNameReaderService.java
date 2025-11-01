@@ -2,7 +2,6 @@ package dev.vality.wachter.service;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TMemoryInputTransport;
@@ -16,8 +15,8 @@ public class MethodNameReaderService {
     private final TProtocolFactory thriftProtocolFactory;
 
     public String getMethodName(byte[] thriftBody) throws TException {
-        TProtocol protocol = createProtocol(thriftBody);
-        TMessage message = protocol.readMessageBegin();
+        var protocol = createProtocol(thriftBody);
+        var message = protocol.readMessageBegin();
         protocol.readMessageEnd();
         return message.name;
     }

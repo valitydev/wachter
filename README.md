@@ -1,27 +1,22 @@
 # wachter
 
-Сервис предназначен для авторизации и проксирования вызовов от [control-center](https://github.com/valitydev/control-center).
+Сервис авторизации и прозрачного проксирования запросов от внешних систем к внутренним доменным сервисам. Представляет из себя HTTP пайплайн для Thrift вызовов с поддержкой заголовков woody и метаданных авторизации
 
-## Описание работы сервиса
+## Основной поток
 
-1. Wachter получает от [control-center](https://github.com/valitydev/control-center) запрос на проведение операции, 
-содержащий токен и имя сервиса, в который необходимо спроксировать запрос. Имя сервиса получает из header "Service".
-2. Из сообщения запроса wachter получает 
-[имя метода](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/service/MethodNameReaderService.java)
-3. В [KeycloakService](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/service/KeycloakService.java) 
-wachter получает AccessToken. 
-4. По имени сервиса из header wachter
-[маппит](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/mapper/ServiceMapper.java)
-url, на который необходимо спроксировать запрос.
-5. Далее сервис проверяет возможность [авторизации](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/security/AccessService.java) 
-пользователя, сравнивая полученные названия сервиса и метода от [control-center](https://github.com/valitydev/control-center)
-с теми, что находятся в JWT токене. Доступ может быть разрешен как [ко всему сервису](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/security/RoleAccessService.java#L22), 
-так и только к [отдельному методу](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/security/RoleAccessService.java#L22) сервиса.
-6. Если доступ разрешен, сервис [отправляет запрос](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/client/WachterClient.java) 
-на ранее смаппленный урл.
-7. Полученный ответ [возвращает](https://github.com/valitydev/wachter/blob/master/src/main/java/dev/vality/wachter/controller/WachterController.java) control-center.
+1. **Фильтрация входящего запроса.** `WoodyTracingFilter` нормализует заголовки `x-woody-*`/`woody.*`, восстанавливает `TraceContext` и создаёт серверный OpenTelemetry span с гарантированным `traceparent`.
+2. **Авторизация.** `WachterService` считывает фактический метод из thrift-пакета, извлекает JWT из Spring Security, проверяет права пользователя через `AccessService`/`RoleAccessService`.
+3. **Определение целевого сервиса.** `ServiceMapper` выбирает URL по заголовку `Service`.
+4. **Формирование запроса.** `WachterRequestFactory` собирает исходные заголовки, накладывает нормализованные Woody-заголовки и значения из текущего `TraceContext`, дополняет идентификационные поля из JWT.
+5. **Отправка и получение ответа.** `WachterClient` использует `RestClient` (JDK HTTP) для вызова доменного сервиса, возвращая `WachterClientResponse` со статусом, заголовками и телом.
+6. **Ответ потребителю.** `WachterController` проверяет дедлайн, передаёт данные в `WachterService` и возвращает клиенту неизменённые статус, заголовки и тело от upstream.
 
-Схема работы сервиса:
+## Особенности
 
-![diagram-wachter](doc/diagram-wachter.svg)
+- Поддержка двух семейств Woody-заголовков (новые `woody.*` и наследуемые `x-woody-*`).
+- Автоматическая генерация и распространение OpenTelemetry `traceparent` при отсутствии входящего заголовка.
+- Выделенный `JwtTokenDetailsExtractor` для повторного использования данных токена.
+- Тестовый контур покрывает композицию фильтра, клиента и контроллера, включая WireMock-интеграцию.
+
+Схема взаимодействий остаётся доступной в [doc/diagram-wachter.svg](doc/diagram-wachter.svg).
 

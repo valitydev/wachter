@@ -11,8 +11,8 @@ import org.springframework.validation.annotation.Validated;
 @Setter
 @Validated
 @Configuration
-@ConfigurationProperties("http-client")
-public class HttpClientProperties {
+@ConfigurationProperties(prefix = "http")
+public class HttpProperties {
 
     @NotNull
     private int maxTotalPooling;
@@ -21,12 +21,12 @@ public class HttpClientProperties {
     private int defaultMaxPerRoute;
 
     @NotNull
-    private int socketTimeout;
+    private long requestTimeout;
 
     @NotNull
-    private int connectionRequestTimeout;
+    private long poolTimeout;
 
     @NotNull
-    private int connectTimeout;
+    private long connectionTimeout;
 
 }

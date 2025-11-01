@@ -13,6 +13,5 @@ public class AccessData {
     private final String userEmail;
     private final List<String> tokenRoles;
     private final String serviceName;
-    private final String traceId;
 
 }

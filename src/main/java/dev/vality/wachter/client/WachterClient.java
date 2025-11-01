@@ -1,68 +1,66 @@
 package dev.vality.wachter.client;
 
+import dev.vality.woody.http.bridge.tracing.TraceContextExtractor;
+import dev.vality.woody.http.bridge.tracing.TraceContextHeadersNormalizer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
-import org.springframework.stereotype.Service;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
+import org.springframework.web.client.RestClient;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static dev.vality.wachter.constants.HeadersConstants.*;
+import java.util.Objects;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
 public class WachterClient {
 
-    private final HttpClient httpclient;
-    private final WachterResponseHandler responseHandler;
+    private final RestClient restClient;
 
-    @SneakyThrows
-    public byte[] send(HttpServletRequest request, byte[] contentData, String url) {
-        HttpPost httppost = new HttpPost(url);
-        setHeader(request, httppost);
-        httppost.setEntity(new ByteArrayEntity(contentData));
-        log.info("Send request to url {} with trace_id: {}", url, getTraceId(request));
-        return httpclient.execute(httppost, responseHandler);
+    private static final byte[] EMPTY_BODY = new byte[0];
+
+    public WachterClientResponse send(HttpServletRequest servletRequest, byte[] contentData, String url) {
+        var httpMethod = resolveMethod(servletRequest);
+
+        var proxyHeaders = ProxyHeadersExtractor.extractHeaders(servletRequest);
+        var traceHeaders = TraceContextExtractor.extractHeaders();
+
+        var httpHeaders = new HttpHeaders();
+        proxyHeaders.forEach(httpHeaders::addAll);
+        traceHeaders.forEach(httpHeaders::set);
+
+        log.info("-> Send request to {} {} | headers: {}", httpMethod, url, httpHeaders);
+
+        var requestSpec = restClient.method(httpMethod)
+                .uri(url)
+                .headers(h -> h.addAll(httpHeaders));
+
+        if (!ObjectUtils.isEmpty(contentData)) {
+            requestSpec = requestSpec.body(contentData);
+        }
+
+        return requestSpec.exchange((request, response) -> {
+            var status = response.getStatusCode();
+            log.info("<- Receive response from {} {} | status: {}, headers: {}", httpMethod, url, status,
+                    response.getHeaders());
+            var responseBody = Objects.requireNonNullElse(response.bodyTo(byte[].class), EMPTY_BODY);
+            var responseHeaders = TraceContextHeadersNormalizer.normalizeResponseHeaders(response.getHeaders());
+            return new WachterClientResponse(status, responseHeaders, responseBody);
+        });
     }
 
-    private void setHeader(HttpServletRequest request, HttpPost httppost) {
-        var headerNames = request.getHeaderNames();
-        var headers = new HashMap<String, String>();
-        if (headerNames != null) {
-            while (headerNames.hasMoreElements()) {
-                String next = headerNames.nextElement();
-                headers.put(next, request.getHeader(next));
-            }
-        }
-        var woodyUserIdentityDeprecatedHeaders = headers.entrySet().stream()
-                .filter(s -> s.getKey().startsWith(X_WOODY_META_USER_IDENTITY_PREFIX))
-                .map(s -> Map.entry(
-                        s.getKey().replaceAll(
-                                X_WOODY_META_USER_IDENTITY_PREFIX,
-                                WOODY_META_USER_IDENTITY_DEPRECATED_PREFIX),
-                        s.getValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
-        var woodyDeprecatedHeaders = headers.entrySet().stream()
-                .filter(s -> s.getKey().startsWith(X_WOODY_PREFIX))
-                .map(s -> Map.entry(s.getKey().replaceAll(X_WOODY_PREFIX, WOODY_DEPRECATED_PREFIX), s.getValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
-        headers.putAll(woodyUserIdentityDeprecatedHeaders);
-        headers.putAll(woodyDeprecatedHeaders);
-        for (var entry : headers.entrySet()) {
-            httppost.setHeader(entry.getKey(), entry.getValue());
+    private HttpMethod resolveMethod(HttpServletRequest servletRequest) {
+        try {
+            return HttpMethod.valueOf(servletRequest.getMethod());
+        } catch (IllegalArgumentException ex) {
+            return HttpMethod.POST;
         }
     }
 
-    private String getTraceId(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader(X_WOODY_TRACE_ID))
-                .orElse(request.getHeader(WOODY_TRACE_ID_DEPRECATED));
+    public record WachterClientResponse(HttpStatusCode statusCode, HttpHeaders headers, byte[] body) {
     }
 }

@@ -15,8 +15,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -42,12 +40,12 @@ public class SecurityConfig {
     }
 
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        var configuration = new CorsConfiguration();
         configuration.applyPermitDefaultValues();
         configuration.addAllowedMethod(HttpMethod.PUT);
         configuration.addAllowedMethod(HttpMethod.DELETE);
         configuration.addAllowedMethod(HttpMethod.OPTIONS);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }

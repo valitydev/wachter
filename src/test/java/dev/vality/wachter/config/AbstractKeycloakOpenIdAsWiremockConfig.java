@@ -2,46 +2,54 @@ package dev.vality.wachter.config;
 
 import dev.vality.wachter.WachterApplication;
 import dev.vality.wachter.auth.utils.KeycloakOpenIdStub;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.wiremock.spring.EnableWireMock;
 
 import java.security.PrivateKey;
 
 @SuppressWarnings("LineLength")
 @SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         classes = {WachterApplication.class},
         properties = {
-                "wiremock.server.baseUrl=http://localhost:${wiremock.server.port}",
-                "spring.security.oauth2.resourceserver.url=http://localhost:${wiremock.server.port}",
-                "spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:${wiremock.server.port}/auth/realms/" +
-                        "${spring.security.oauth2.resourceserver.jwt.realm}"})
+                "server.port=8083",
+                "spring.security.oauth2.resourceserver.url=${wiremock.server.baseUrl}",
+                "spring.security.oauth2.resourceserver.jwt.issuer-uri=${wiremock.server.baseUrl}/auth/realms/" +
+                        "${spring.security.oauth2.resourceserver.jwt.realm}",
+                "woody-http-bridge.tracing.endpoints[0].path=/wachter",
+                "woody-http-bridge.tracing.endpoints[0].port=8083",
+                "woody-http-bridge.tracing.endpoints[0].request-header-mode: WOODY_OR_X_WOODY",
+                "woody-http-bridge.tracing.endpoints[0].response-header-mode: OFF",
+        })
 @AutoConfigureMockMvc
-@AutoConfigureWireMock(port = 0)
+@EnableWireMock
 @ExtendWith(SpringExtension.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class AbstractKeycloakOpenIdAsWiremockConfig {
 
     @Autowired
     private KeycloakOpenIdStub keycloakOpenIdStub;
 
-    @BeforeAll
-    public static void setUp(@Autowired KeycloakOpenIdStub keycloakOpenIdStub) throws Exception {
+    @BeforeEach
+    public void setUp(@Autowired KeycloakOpenIdStub keycloakOpenIdStub) throws Exception {
         keycloakOpenIdStub.givenStub();
     }
 
     protected String generateSimpleJwtWithRoles() {
         return keycloakOpenIdStub.generateJwt("Deanonimus", "unknown", "Domain", "messages:methodName",
-                "DominantCache", "!DominantCache:methodName");
+                "DominantCache", "!DominantCache:methodName", "MerchantStatistics", "PaymentAdjustment");
 
     }
 
     protected String generateSimpleJwtWithRolesAndCustomKey(PrivateKey privateKey) {
-        return keycloakOpenIdStub.generateJwtWithCustomKey(privateKey, "Deanonimus", "unknown", "Domain", "messages:methodName",
+        return keycloakOpenIdStub.generateJwtWithCustomKey(privateKey, "Deanonimus", "unknown", "Domain",
+                "messages:methodName",
                 "DominantCache", "!DominantCache:methodName");
 
     }
