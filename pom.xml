@@ -27,12 +27,10 @@
         <dependency>
             <groupId>dev.vality.woody</groupId>
             <artifactId>woody-api</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>dev.vality.woody</groupId>
             <artifactId>woody-thrift</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>dev.vality.geck</groupId>
