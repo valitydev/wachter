@@ -4,7 +4,7 @@ import dev.vality.wachter.client.WachterClient;
 import dev.vality.wachter.mapper.ServiceMapper;
 import dev.vality.wachter.security.AccessData;
 import dev.vality.wachter.security.AccessService;
-import dev.vality.woody.http.bridge.util.JwtTokenDetailsExtractor;
+import dev.vality.wachter.security.JwtTokenDetailsExtractor;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -30,7 +30,7 @@ public class WachterService {
         var contentData = getContentData(request);
         var methodName = methodNameReaderService.getMethodName(contentData);
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        var tokenDetails = JwtTokenDetailsExtractor.extractFromContext(authentication)
+        var tokenDetails = JwtTokenDetailsExtractor.extract(authentication)
                 .orElseThrow(() -> new IllegalStateException("JWT authentication is required"));
         var service = serviceMapper.getService(request);
         accessService.checkUserAccess(AccessData.builder()

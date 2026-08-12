@@ -1,6 +1,6 @@
 package dev.vality.wachter.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import dev.vality.wachter.config.properties.HttpProperties;
 import lombok.RequiredArgsConstructor;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -21,13 +21,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.web.client.RestClient;
 
 import javax.net.ssl.SSLContext;
-import java.time.Duration;
-import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -85,25 +82,16 @@ public class RestClientConfig {
 
     @Bean
     public HttpComponentsClientHttpRequestFactory requestFactory(HttpClient httpClient) {
-        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
-        factory.setConnectTimeout(Duration.ofMillis(httpProperties.getConnectionTimeout()));
-        factory.setConnectionRequestTimeout(Duration.ofMillis(httpProperties.getPoolTimeout()));
-        factory.setReadTimeout(Duration.ofMillis(httpProperties.getRequestTimeout()));
-        return factory;
+        return new HttpComponentsClientHttpRequestFactory(httpClient);
     }
 
     @Bean
-    public RestClient restClient(ClientHttpRequestFactory requestFactory, ObjectMapper objectMapper) {
+    public RestClient restClient(ClientHttpRequestFactory requestFactory, JsonMapper jsonMapper) {
         return RestClient.builder()
                 .requestFactory(requestFactory)
-                .messageConverters(converters -> updateObjectMapper(converters, objectMapper))
+                .configureMessageConverters(converters -> converters
+                        .registerDefaults()
+                        .withJsonConverter(new JacksonJsonHttpMessageConverter(jsonMapper)))
                 .build();
-    }
-
-    private void updateObjectMapper(List<HttpMessageConverter<?>> converters, ObjectMapper objectMapper) {
-        converters.stream()
-                .filter(MappingJackson2HttpMessageConverter.class::isInstance)
-                .map(MappingJackson2HttpMessageConverter.class::cast)
-                .forEach(converter -> converter.setObjectMapper(objectMapper));
     }
 }

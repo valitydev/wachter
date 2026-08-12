@@ -1,7 +1,6 @@
 package dev.vality.wachter.client;
 
-import dev.vality.woody.http.bridge.tracing.TraceContextExtractor;
-import dev.vality.woody.http.bridge.tracing.TraceContextHeadersNormalizer;
+import dev.vality.wachter.tracing.TraceHeaderNormalizer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,11 +26,11 @@ public class WachterClient {
         var httpMethod = resolveMethod(servletRequest);
 
         var proxyHeaders = ProxyHeadersExtractor.extractHeaders(servletRequest);
-        var traceHeaders = TraceContextExtractor.extractHeaders();
+        var traceHeaders = TraceHeaderNormalizer.normalizeRequest(servletRequest);
 
         var httpHeaders = new HttpHeaders();
         proxyHeaders.forEach(httpHeaders::addAll);
-        traceHeaders.forEach(httpHeaders::set);
+        httpHeaders.addAll(traceHeaders);
 
         log.info("-> Send request to {} {} | headers: {}", httpMethod, url, httpHeaders);
 
@@ -48,7 +47,7 @@ public class WachterClient {
             log.info("<- Receive response from {} {} | status: {}, headers: {}", httpMethod, url, status,
                     response.getHeaders());
             var responseBody = Objects.requireNonNullElse(response.bodyTo(byte[].class), EMPTY_BODY);
-            var responseHeaders = TraceContextHeadersNormalizer.normalizeResponseHeaders(response.getHeaders());
+            var responseHeaders = TraceHeaderNormalizer.normalizeResponse(response.getHeaders());
             return new WachterClientResponse(status, responseHeaders, responseBody);
         });
     }

@@ -3,12 +3,10 @@ package dev.vality.wachter.config;
 import dev.vality.wachter.WachterApplication;
 import dev.vality.wachter.auth.utils.KeycloakOpenIdStub;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.wiremock.spring.EnableWireMock;
 
 import java.security.PrivateKey;
@@ -22,14 +20,9 @@ import java.security.PrivateKey;
                 "spring.security.oauth2.resourceserver.url=${wiremock.server.baseUrl}",
                 "spring.security.oauth2.resourceserver.jwt.issuer-uri=${wiremock.server.baseUrl}/auth/realms/" +
                         "${spring.security.oauth2.resourceserver.jwt.realm}",
-                "woody-http-bridge.tracing.endpoints[0].path=/wachter",
-                "woody-http-bridge.tracing.endpoints[0].port=8083",
-                "woody-http-bridge.tracing.endpoints[0].request-header-mode: WOODY_OR_X_WOODY",
-                "woody-http-bridge.tracing.endpoints[0].response-header-mode: OFF",
         })
 @AutoConfigureMockMvc
 @EnableWireMock
-@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class AbstractKeycloakOpenIdAsWiremockConfig {
 

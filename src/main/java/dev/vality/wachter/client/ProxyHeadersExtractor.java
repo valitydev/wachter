@@ -1,6 +1,6 @@
 package dev.vality.wachter.client;
 
-import dev.vality.woody.http.bridge.tracing.TraceHeadersConstants;
+import dev.vality.wachter.tracing.TraceHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpHeaders;
@@ -43,19 +43,19 @@ public class ProxyHeadersExtractor {
             "dnt",
             "priority",
             "service",
-            TraceHeadersConstants.OTEL_TRACE_PARENT,
-            TraceHeadersConstants.OTEL_TRACE_STATE,
-            TraceHeadersConstants.ExternalHeaders.X_REQUEST_ID,
-            TraceHeadersConstants.ExternalHeaders.X_REQUEST_DEADLINE,
-            TraceHeadersConstants.ExternalHeaders.X_INVOICE_ID
+            TraceHeaders.OTEL_TRACE_PARENT,
+            TraceHeaders.OTEL_TRACE_STATE,
+            TraceHeaders.ExternalHeaders.X_REQUEST_ID,
+            TraceHeaders.ExternalHeaders.X_REQUEST_DEADLINE,
+            TraceHeaders.ExternalHeaders.X_INVOICE_ID
     ).map(header -> header.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
 
     private static final List<String> EXCLUDED_PREFIXES = List.of(
             "cf-",
             "cdn-",
             "sec-",
-            TraceHeadersConstants.WOODY_PREFIX,
-            TraceHeadersConstants.ExternalHeaders.X_WOODY_PREFIX
+            TraceHeaders.WOODY_PREFIX,
+            TraceHeaders.ExternalHeaders.X_WOODY_PREFIX
     );
 
     public HttpHeaders extractHeaders(HttpServletRequest request) {

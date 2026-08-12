@@ -12,9 +12,9 @@ management:
     health:
       show-details: always
     metrics:
-      enabled: true
+      access: read-only
     prometheus:
-      enabled: true
+      access: read-only
   endpoints:
     web:
       exposure:
@@ -126,19 +126,6 @@ wachter:
 
 auth:
   enabled: true
-
-woody-http-bridge:
-  tracing:
-    endpoints:
-      - path: /wachter
-        port: ${server.port}
-        request-header-mode: WOODY_OR_X_WOODY
-        response-header-mode: OFF
-
-otel:
-  enabled: true
-  resource: http://localhost:4318/v1/traces
-  timeout: 60000
 
 http:
   requestTimeout: 60000
