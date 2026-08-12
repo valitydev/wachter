@@ -78,8 +78,8 @@ class OpenTelemetryAgentTest {
                 "--server.port=" + port,
                 "--management.server.port=" + managementPort,
                 "--spring.security.oauth2.resourceserver.url=" + wireMock.baseUrl(),
-                "--spring.security.oauth2.resourceserver.jwt.issuer-uri="
-                        + wireMock.baseUrl() + "/auth/realms/internal",
+                "--spring.security.oauth2.resourceserver.jwt.issuer-uri=" +
+                        wireMock.baseUrl() + "/auth/realms/internal",
                 "--wachter.services.Domain.url=" + wireMock.baseUrl() + "/upstream")
                 .redirectErrorStream(true)
                 .redirectOutput(Path.of("target/opentelemetry-agent-test.log").toFile());
