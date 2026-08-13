@@ -1,12 +1,12 @@
 package dev.vality.wachter.integration;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
 import dev.vality.wachter.testutil.TMessageUtil;
-import dev.vality.woody.api.trace.context.TraceContext;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.*;
+import static dev.vality.wachter.tracing.TraceHeaders.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestPropertySource(properties = {
@@ -38,8 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 })
 class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
-    private static final String TRACEPARENT_PATTERN = "00-[0-9a-f]{32}-[0-9a-f]{16}-0[0-1]";
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new JsonMapper();
 
     @Value("${server.port}")
     private int port;
@@ -63,7 +62,6 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
     @AfterEach
     void tearDown() {
-        TraceContext.setCurrentTraceData(null);
         resetAllRequests();
     }
 
@@ -141,7 +139,7 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .toEntity(byte[].class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(upstreamTraceparent, response.getHeaders().getFirst(OTEL_TRACE_PARENT));
+        assertFalse(response.getHeaders().containsHeader(OTEL_TRACE_PARENT));
         assertArrayEquals(responseBody, response.getBody());
 
         List<LoggedRequest> requests = findAll(postRequestedFor(urlEqualTo("/deanonimus")));
@@ -162,16 +160,16 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 upstreamRequest.getHeader(HttpHeaders.USER_AGENT));
 
         var jwtClaims = decodeJwtPayload(jwt);
-        assertEquals(jwtClaims.get("sub").asText(),
+        assertEquals(jwtClaims.get("sub").asString(),
                 upstreamRequest.getHeader(WOODY_META_ID));
-        assertEquals(jwtClaims.get("preferred_username").asText(),
+        assertEquals(jwtClaims.get("preferred_username").asString(),
                 upstreamRequest.getHeader(WOODY_META_USERNAME));
-        assertEquals(jwtClaims.get("email").asText(),
+        assertEquals(jwtClaims.get("email").asString(),
                 upstreamRequest.getHeader(WOODY_META_EMAIL));
         assertEquals(extractRealm(jwtClaims),
                 upstreamRequest.getHeader(WOODY_META_REALM));
 
-        assertTrue(upstreamRequest.getHeader(OTEL_TRACE_PARENT).matches(TRACEPARENT_PATTERN));
+        assertFalse(upstreamRequest.containsHeader(OTEL_TRACE_PARENT));
 
         assertEquals(requestId, upstreamRequest.getHeader(WOODY_META_REQUEST_ID));
         assertEquals(deadline.toString(), upstreamRequest.getHeader(WOODY_META_REQUEST_DEADLINE));
@@ -194,7 +192,7 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         final var responseBody = "test-response".getBytes();
         final var jwt = generateSimpleJwtWithRoles();
         final var jwtClaims = decodeJwtPayload(jwt);
-        var otelTraceId = "3d8202ad198e4d37771c995246e1b356";
+        var traceparent = "00-3d8202ad198e4d37771c995246e1b356-9cfa814ae977266e-01";
 
         stubFor(post(urlEqualTo("/magista"))
                 .withRequestBody(binaryEqualTo(payload))
@@ -224,8 +222,8 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                     headers.set(ExternalHeaders.X_REQUEST_ID, "mixed-request-id");
                     headers.set(ExternalHeaders.X_REQUEST_DEADLINE, deadline.toString());
 
-                    // Traceparent
-                    headers.set(OTEL_TRACE_PARENT, "00-" + otelTraceId + "-9cfa814ae977266e-01");
+                    // The application must leave trace context propagation to the Java agent.
+                    headers.set(OTEL_TRACE_PARENT, traceparent);
                 })
                 .body(payload)
                 .retrieve()
@@ -246,16 +244,16 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         assertNotNull(upstreamRequest.getHeader(WOODY_DEADLINE));
 
         // User identity metadata should be sourced from JWT when present
-        assertEquals(jwtClaims.get("sub").asText(), upstreamRequest.getHeader(WOODY_META_ID));
-        assertEquals(jwtClaims.get("preferred_username").asText(),
+        assertEquals(jwtClaims.get("sub").asString(), upstreamRequest.getHeader(WOODY_META_ID));
+        assertEquals(jwtClaims.get("preferred_username").asString(),
                 upstreamRequest.getHeader(WOODY_META_USERNAME));
-        assertEquals(jwtClaims.get("email").asText(),
+        assertEquals(jwtClaims.get("email").asString(),
                 upstreamRequest.getHeader(WOODY_META_EMAIL));
         assertEquals(extractRealm(jwtClaims),
                 upstreamRequest.getHeader(WOODY_META_REALM));
 
-        // Traceparent should be preserved
-        assertTrue(upstreamRequest.getHeader(OTEL_TRACE_PARENT).contains(otelTraceId));
+        // Maven tests run without the Java agent, so the application must not proxy trace context itself.
+        assertFalse(upstreamRequest.containsHeader(OTEL_TRACE_PARENT));
 
         // Request metadata should be preserved
         assertEquals("mixed-request-id", upstreamRequest.getHeader(WOODY_META_REQUEST_ID));
@@ -376,7 +374,7 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         if (issuerNode == null || issuerNode.isNull()) {
             return null;
         }
-        var issuer = issuerNode.asText();
+        var issuer = issuerNode.asString();
         if (issuer == null) {
             return null;
         }

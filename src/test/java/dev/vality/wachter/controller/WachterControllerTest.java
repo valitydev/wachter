@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import static dev.vality.wachter.client.WachterClient.WachterClientResponse;
-import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.*;
+import static dev.vality.wachter.tracing.TraceHeaders.*;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;

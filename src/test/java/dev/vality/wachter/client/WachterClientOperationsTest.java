@@ -1,16 +1,5 @@
 package dev.vality.wachter.client;
 
-import dev.vality.woody.api.trace.TraceData;
-import dev.vality.woody.api.trace.context.TraceContext;
-import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.opentelemetry.api.trace.SpanKind;
-import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.sdk.OpenTelemetrySdk;
-import io.opentelemetry.sdk.trace.SdkTracerProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -20,7 +9,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
-import static dev.vality.woody.http.bridge.tracing.TraceHeadersConstants.ExternalHeaders.X_WOODY_TRACE_ID;
+import static dev.vality.wachter.tracing.TraceHeaders.ExternalHeaders.X_WOODY_TRACE_ID;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
@@ -29,39 +18,11 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class WachterClientOperationsTest {
 
-    private SdkTracerProvider tracerProvider;
-
-    @BeforeEach
-    void setUp() {
-        GlobalOpenTelemetry.resetForTest();
-        tracerProvider = SdkTracerProvider.builder().build();
-        final var openTelemetry = OpenTelemetrySdk.builder()
-                .setTracerProvider(tracerProvider)
-                .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
-                .build();
-        GlobalOpenTelemetry.set(openTelemetry);
-    }
-
-    @AfterEach
-    void tearDown() {
-        TraceContext.setCurrentTraceData(null);
-        GlobalOpenTelemetry.resetForTest();
-        if (tracerProvider != null) {
-            tracerProvider.close();
-        }
-    }
-
     @Test
     void shouldSendRequestWithTracingHeaders() {
         final var builder = RestClient.builder();
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
-
-        final var traceData = prepareTraceData("test-span");
-
-        final var serviceSpan = traceData.getServiceSpan().getSpan();
-        serviceSpan.setTraceId("test-trace-id");
-        serviceSpan.setId("test-span-id");
 
         final var servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("POST");
@@ -87,7 +48,6 @@ class WachterClientOperationsTest {
         assertEquals(HttpStatus.OK, actualResponse.statusCode());
         assertArrayEquals(expectedResponse, actualResponse.body());
         server.verify();
-        traceData.finishOtelSpan();
     }
 
     @Test
@@ -95,10 +55,6 @@ class WachterClientOperationsTest {
         final var builder = RestClient.builder();
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
-
-        final var traceData = prepareTraceData("test-span");
-        traceData.getServiceSpan().getSpan().setTraceId("filter-trace-id");
-        traceData.getServiceSpan().getSpan().setId("filter-span-id");
 
         final var servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("POST");
@@ -120,7 +76,6 @@ class WachterClientOperationsTest {
         client.send(servletRequest, null, "http://upstream/disallowed");
 
         server.verify();
-        traceData.finishOtelSpan();
     }
 
     @Test
@@ -128,11 +83,6 @@ class WachterClientOperationsTest {
         final var builder = RestClient.builder();
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
-
-        final var traceData = prepareTraceData("test-span");
-
-        final var serviceSpan = traceData.getServiceSpan().getSpan();
-        serviceSpan.setTraceId("get-trace-id");
 
         final var servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("GET");
@@ -148,7 +98,6 @@ class WachterClientOperationsTest {
         assertEquals(HttpStatus.OK, response.statusCode());
         assertArrayEquals("{}".getBytes(), response.body());
         server.verify();
-        traceData.finishOtelSpan();
     }
 
     @Test
@@ -156,11 +105,6 @@ class WachterClientOperationsTest {
         final var builder = RestClient.builder();
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
-
-        final var traceData = prepareTraceData("test-span");
-
-        final var serviceSpan = traceData.getServiceSpan().getSpan();
-        serviceSpan.setTraceId("error-trace-id");
 
         final var servletRequest = new MockHttpServletRequest();
         servletRequest.setMethod("POST");
@@ -179,14 +123,6 @@ class WachterClientOperationsTest {
         assertEquals(HttpStatus.BAD_GATEWAY, response.statusCode());
         assertArrayEquals("bad-gateway".getBytes(), response.body());
         server.verify();
-        traceData.finishOtelSpan();
     }
 
-    private TraceData prepareTraceData(String spanName) {
-        final var traceData = new TraceData();
-        traceData.startNewOtelSpan(spanName, SpanKind.SERVER, Context.current());
-        traceData.openOtelScope();
-        TraceContext.setCurrentTraceData(traceData);
-        return traceData;
-    }
 }
