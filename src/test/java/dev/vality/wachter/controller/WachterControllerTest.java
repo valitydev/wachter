@@ -100,7 +100,7 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                         .header(WOODY_PARENT_ID, "parent")
                         .header(WOODY_TRACE_ID, "trace")
                         .header(WOODY_SPAN_ID, "span")
-                        .header(WOODY_DEADLINE, "deadline")
+                        .header(WOODY_DEADLINE, "2030-01-02T03:04:05Z")
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
@@ -120,7 +120,7 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                         .header(ExternalHeaders.X_WOODY_PARENT_ID, "parent")
                         .header(ExternalHeaders.X_WOODY_TRACE_ID, "trace")
                         .header(ExternalHeaders.X_WOODY_SPAN_ID, "span")
-                        .header(ExternalHeaders.X_WOODY_DEADLINE, "deadline")
+                        .header(ExternalHeaders.X_WOODY_DEADLINE, "2030-01-02T03:04:05Z")
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());

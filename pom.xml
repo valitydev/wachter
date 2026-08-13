@@ -26,6 +26,10 @@
         <!--vality-->
         <dependency>
             <groupId>dev.vality.woody</groupId>
+            <artifactId>woody-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.vality.woody</groupId>
             <artifactId>woody-thrift</artifactId>
         </dependency>
         <dependency>
