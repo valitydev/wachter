@@ -1,16 +1,21 @@
 package dev.vality.wachter.integration;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import dev.vality.wachter.client.WachterClient;
 import dev.vality.wachter.config.AbstractKeycloakOpenIdAsWiremockConfig;
 import dev.vality.wachter.testutil.TMessageUtil;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -44,12 +49,18 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     private int port;
 
     private RestClient restClient;
+    private Logger wachterClientLogger;
+    private ListAppender<ILoggingEvent> logAppender;
 
     @Autowired
     private TProtocolFactory protocolFactory;
 
     @BeforeEach
     void setUp() {
+        wachterClientLogger = (Logger) LoggerFactory.getLogger(WachterClient.class);
+        logAppender = new ListAppender<>();
+        logAppender.start();
+        wachterClientLogger.addAppender(logAppender);
         restClient = RestClient.builder()
                 .baseUrl("http://localhost:" + port)
                 .defaultStatusHandler(status -> true, (request, response) -> {
@@ -62,6 +73,8 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
     @AfterEach
     void tearDown() {
+        wachterClientLogger.detachAppender(logAppender);
+        logAppender.stop();
         resetAllRequests();
     }
 
@@ -168,6 +181,20 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 upstreamRequest.getHeader(WOODY_META_EMAIL));
         assertEquals(extractRealm(jwtClaims),
                 upstreamRequest.getHeader(WOODY_META_REALM));
+
+        var sendLog = logAppender.list.stream()
+                .filter(event -> event.getFormattedMessage().startsWith("-> Send request"))
+                .findFirst()
+                .orElseThrow();
+        var mdc = sendLog.getMDCPropertyMap();
+        assertEquals(jwtClaims.get("sub").asString(),
+                mdc.get("rpc.server.metadata.user-identity.id"));
+        assertEquals(jwtClaims.get("preferred_username").asString(),
+                mdc.get("rpc.server.metadata.user-identity.username"));
+        assertEquals(jwtClaims.get("email").asString(),
+                mdc.get("rpc.server.metadata.user-identity.email"));
+        assertEquals(extractRealm(jwtClaims),
+                mdc.get("rpc.server.metadata.user-identity.realm"));
 
         assertFalse(upstreamRequest.containsHeader(OTEL_TRACE_PARENT));
 

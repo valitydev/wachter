@@ -1,22 +1,52 @@
-# wachter
+# Wachter
 
-Сервис авторизации и прозрачного проксирования запросов от внешних систем к внутренним доменным сервисам. Представляет из себя HTTP пайплайн для Thrift вызовов с поддержкой заголовков woody и метаданных авторизации
+Wachter — HTTP-шлюз для авторизации и прозрачного проксирования Thrift-запросов от внешних систем к внутренним сервисам. Сервис определяет целевой адрес по заголовку `Service`, проверяет доступ пользователя по JWT и Thrift-методу, а затем передаёт запрос вместе с Woody-контекстом и метаданными пользователя.
 
-## Основной поток
+## HTTP-интерфейс
 
-1. **Фильтрация входящего запроса.** `WoodyTracingFilter` нормализует заголовки `x-woody-*`/`woody.*`, восстанавливает `TraceContext` и создаёт серверный OpenTelemetry span с гарантированным `traceparent`.
-2. **Авторизация.** `WachterService` считывает фактический метод из thrift-пакета, извлекает JWT из Spring Security, проверяет права пользователя через `AccessService`/`RoleAccessService`.
-3. **Определение целевого сервиса.** `ServiceMapper` выбирает URL по заголовку `Service`.
-4. **Формирование запроса.** `WachterRequestFactory` собирает исходные заголовки, накладывает нормализованные Woody-заголовки и значения из текущего `TraceContext`, дополняет идентификационные поля из JWT.
-5. **Отправка и получение ответа.** `WachterClient` использует `RestClient` (JDK HTTP) для вызова доменного сервиса, возвращая `WachterClientResponse` со статусом, заголовками и телом.
-6. **Ответ потребителю.** `WachterController` проверяет дедлайн, передаёт данные в `WachterService` и возвращает клиенту неизменённые статус, заголовки и тело от upstream.
+- `POST /wachter` на порту `8022` — единственный эндпоинт прикладного API.
+- Остальные пути на прикладном порту возвращают `404 Unknown address`.
+- Actuator-эндпоинты `health`, `info` и `prometheus` доступны на management-порту `8023`.
 
-## Особенности
+Запрос должен содержать:
 
-- Поддержка двух семейств Woody-заголовков (новые `woody.*` и наследуемые `x-woody-*`).
-- Автоматическая генерация и распространение OpenTelemetry `traceparent` при отсутствии входящего заголовка.
-- Выделенный `JwtTokenDetailsExtractor` для повторного использования данных токена.
-- Тестовый контур покрывает композицию фильтра, клиента и контроллера, включая WireMock-интеграцию.
+- Bearer JWT в заголовке `Authorization`;
+- имя целевого сервиса в заголовке `Service`;
+- бинарное тело Thrift-вызова.
 
-Схема взаимодействий остаётся доступной в [doc/diagram-wachter.svg](doc/diagram-wachter.svg).
+Соответствие значений `Service` внутренним URL настраивается в `wachter.services` в `application.yml` или переопределяется при развёртывании.
 
+## Обработка запроса
+
+1. `WoodyTracingFilter` нормализует входящие Woody-заголовки и создаёт Woody `TraceData` через `WFlow`.
+2. Данные пользователя из JWT и служебные заголовки запроса добавляются в `woody.meta.user-identity.*`.
+3. `WachterService` читает имя метода из бинарного Thrift-пакета.
+4. `ServiceMapper` определяет целевой сервис по заголовку `Service`.
+5. `AccessService` проверяет доступ с учётом метода, сервиса, email пользователя и ролей JWT.
+6. `WachterClient` отправляет запрос в upstream через Spring `RestClient` и Apache HttpClient 5.
+7. Клиент получает статус и тело upstream-ответа, а Woody-заголовки ответа преобразуются обратно во внешнее представление.
+
+## Woody metadata
+
+Wachter поддерживает внутренние заголовки `woody.*` и внешние заголовки `x-woody-*`. Для каждого запроса сервис восстанавливает либо создаёт Woody trace context и передаёт его в upstream.
+
+В `WFlow` также добавляются данные пользователя из JWT:
+
+- `user-identity.id`;
+- `user-identity.username`;
+- `user-identity.email`;
+- `user-identity.realm`.
+
+Эти значения доступны как Woody custom metadata и публикуются в MDC с префиксом `rpc.server.metadata.`. Заголовки `X-Request-ID`, `X-Request-Deadline` и `X-Invoice-ID` также преобразуются в Woody metadata.
+
+## OpenTelemetry
+
+W3C trace context (`traceparent` и `tracestate`) обрабатывает OpenTelemetry Java Agent. Сборка помещает agent в runtime image и запускает приложение с параметром `-javaagent`. Wachter не создаёт OTEL span вручную и не переносит эти заголовки как обычные proxy-заголовки.
+
+При штатном запуске agent:
+
+- продолжает входящий W3C trace context либо создаёт новый trace;
+- создаёт серверный span для входящего запроса;
+- внедряет актуальный context в исходящий HTTP-запрос.
+
+Woody tracing и OpenTelemetry — независимые механизмы: `WFlow` отвечает за Woody trace context и `woody.meta`, Java Agent — за OTEL spans и W3C propagation.

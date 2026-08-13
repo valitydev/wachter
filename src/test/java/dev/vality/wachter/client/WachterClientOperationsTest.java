@@ -1,5 +1,6 @@
 package dev.vality.wachter.client;
 
+import dev.vality.woody.api.flow.WFlow;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -19,7 +20,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 class WachterClientOperationsTest {
 
     @Test
-    void shouldSendRequestWithTracingHeaders() {
+    void shouldSendRequestWithTracingHeaders() throws Exception {
         final var builder = RestClient.builder();
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
@@ -43,7 +44,8 @@ class WachterClientOperationsTest {
 
         final var client = new WachterClient(restClient);
 
-        final var actualResponse = client.send(servletRequest, payload, "http://upstream");
+        final var actualResponse = new WFlow().createServiceFork(
+                () -> client.send(servletRequest, payload, "http://upstream")).call();
 
         assertEquals(HttpStatus.OK, actualResponse.statusCode());
         assertArrayEquals(expectedResponse, actualResponse.body());
@@ -51,7 +53,7 @@ class WachterClientOperationsTest {
     }
 
     @Test
-    void shouldFilterDisallowedHeaders() {
+    void shouldFilterDisallowedHeaders() throws Exception {
         final var builder = RestClient.builder();
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
@@ -73,13 +75,14 @@ class WachterClientOperationsTest {
 
         final var client = new WachterClient(restClient);
 
-        client.send(servletRequest, null, "http://upstream/disallowed");
+        new WFlow().createServiceFork(
+                () -> client.send(servletRequest, null, "http://upstream/disallowed")).call();
 
         server.verify();
     }
 
     @Test
-    void shouldHandleGetRequestWithoutBody() {
+    void shouldHandleGetRequestWithoutBody() throws Exception {
         final var builder = RestClient.builder();
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
@@ -93,7 +96,8 @@ class WachterClientOperationsTest {
 
         final var client = new WachterClient(restClient);
 
-        final var response = client.send(servletRequest, null, "http://upstream/resource");
+        final var response = new WFlow().createServiceFork(
+                () -> client.send(servletRequest, null, "http://upstream/resource")).call();
 
         assertEquals(HttpStatus.OK, response.statusCode());
         assertArrayEquals("{}".getBytes(), response.body());
@@ -101,7 +105,7 @@ class WachterClientOperationsTest {
     }
 
     @Test
-    void shouldReturnErrorResponseWithoutThrowing() {
+    void shouldReturnErrorResponseWithoutThrowing() throws Exception {
         final var builder = RestClient.builder();
         final var server = MockRestServiceServer.bindTo(builder).build();
         final var restClient = builder.build();
@@ -118,7 +122,8 @@ class WachterClientOperationsTest {
 
         final var client = new WachterClient(restClient);
 
-        final var response = client.send(servletRequest, payload, "http://upstream/fail");
+        final var response = new WFlow().createServiceFork(
+                () -> client.send(servletRequest, payload, "http://upstream/fail")).call();
 
         assertEquals(HttpStatus.BAD_GATEWAY, response.statusCode());
         assertArrayEquals("bad-gateway".getBytes(), response.body());
