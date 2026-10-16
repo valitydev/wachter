@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -25,6 +27,7 @@ public class WachterProperties {
 
         private String name;
         private String url;
+        private List<String> forwardedRolePrefixes = new ArrayList<>();
 
     }
 }

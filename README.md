@@ -35,7 +35,13 @@ Wachter поддерживает внутренние заголовки `woody.
 - `user-identity.id`;
 - `user-identity.username`;
 - `user-identity.email`;
-- `user-identity.realm`.
+- `user-identity.realm`;
+- `user-identity.roles` — роли JWT через запятую, только для сервисов, у которых задан
+  `wachter.services.<Service>.forwarded-role-prefixes`, и только роли с этими префиксами. Так сервис может
+  ограничивать доступ внутри своих данных: например, candlekeep получает роли `candlekeep:<category>` и по ним решает,
+  какие категории документов доступны пользователю. Остальные сервисы ролей не получают. Значение берётся только из
+  JWT: присланный клиентом `user-identity.roles` (`x-woody-meta-user-identity-roles` или
+  `woody.meta.user-identity.roles`) всегда отбрасывается.
 
 Эти значения доступны как Woody custom metadata и публикуются в MDC с префиксом `rpc.server.metadata.`. Заголовки `X-Request-ID`, `X-Request-Deadline` и `X-Invoice-ID` также преобразуются в Woody metadata.
 

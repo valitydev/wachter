@@ -39,7 +39,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestPropertySource(properties = {
         "wachter.services.Domain.url=${wiremock.server.baseUrl}/domain",
         "wachter.services.Deanonimus.url=${wiremock.server.baseUrl}/deanonimus",
-        "wachter.services.MerchantStatistics.url=${wiremock.server.baseUrl}/magista"
+        "wachter.services.MerchantStatistics.url=${wiremock.server.baseUrl}/magista",
+        "wachter.services.Candlekeep.url=${wiremock.server.baseUrl}/candlekeep"
 })
 class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
 
@@ -285,6 +286,60 @@ class WachterIntegrationTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         // Request metadata should be preserved
         assertEquals("mixed-request-id", upstreamRequest.getHeader(WOODY_META_REQUEST_ID));
         assertEquals(deadline.toString(), upstreamRequest.getHeader(WOODY_META_REQUEST_DEADLINE));
+    }
+
+    @Test
+    void shouldForwardCandlekeepRolesFromJwtInsteadOfClientSuppliedOnes() throws Exception {
+        final var payload = TMessageUtil.createTMessage(protocolFactory);
+        final var jwt = generateJwtWithRoles("Candlekeep", "candlekeep:dispute", "Domain");
+
+        stubFor(post(urlEqualTo("/candlekeep"))
+                .withRequestBody(binaryEqualTo(payload))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.OK.value())));
+
+        final ResponseEntity<byte[]> response = restClient.post()
+                .uri("/wachter")
+                .contentType(MediaType.valueOf("application/x-thrift"))
+                .headers(headers -> {
+                    headers.set("Authorization", "Bearer " + jwt);
+                    headers.set("Service", "Candlekeep");
+                    // A client must not be able to grant itself access to document categories
+                    headers.set(ExternalHeaders.X_WOODY_META_ROLES, "candlekeep:dispute,candlekeep:questionnaire");
+                })
+                .body(payload)
+                .retrieve()
+                .toEntity(byte[].class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        var upstreamRequest = findAll(postRequestedFor(urlEqualTo("/candlekeep"))).getFirst();
+        assertEquals("candlekeep:dispute", upstreamRequest.getHeader(WOODY_META_ROLES));
+    }
+
+    @Test
+    void shouldNotForwardRolesToServiceWithoutRolePrefixes() throws Exception {
+        final var payload = TMessageUtil.createTMessage(protocolFactory);
+        final var jwt = generateJwtWithRoles("Deanonimus", "candlekeep:dispute");
+
+        stubFor(post(urlEqualTo("/deanonimus"))
+                .withRequestBody(binaryEqualTo(payload))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.OK.value())));
+
+        final ResponseEntity<byte[]> response = restClient.post()
+                .uri("/wachter")
+                .contentType(MediaType.valueOf("application/x-thrift"))
+                .headers(headers -> {
+                    headers.set("Authorization", "Bearer " + jwt);
+                    headers.set("Service", "Deanonimus");
+                })
+                .body(payload)
+                .retrieve()
+                .toEntity(byte[].class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        var upstreamRequest = findAll(postRequestedFor(urlEqualTo("/deanonimus"))).getFirst();
+        assertFalse(upstreamRequest.containsHeader(WOODY_META_ROLES));
     }
 
     @Test

@@ -4,11 +4,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.time.DateTimeException;
+import java.util.Arrays;
 
 import static dev.vality.wachter.tracing.TraceHeaders.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -82,6 +84,40 @@ class TraceHeaderNormalizerTest {
     }
 
     @Test
+    void shouldDropClientSuppliedRolesEvenWhenJwtHasRoles() {
+        var request = new MockHttpServletRequest();
+        request.addHeader(ExternalHeaders.X_WOODY_META_ROLES, "candlekeep:dispute,candlekeep:questionnaire");
+        authenticate("Candlekeep", "candlekeep:payment_proof");
+
+        var headers = TraceHeaderNormalizer.normalizeRequest(request);
+
+        // JWT roles are added only once the target service is known, see UserRolesForwarder
+        assertFalse(headers.containsHeader(WOODY_META_ROLES));
+    }
+
+    @Test
+    void shouldDropClientSuppliedRolesWhenJwtHasNone() {
+        var request = new MockHttpServletRequest();
+        request.addHeader(ExternalHeaders.X_WOODY_META_ROLES, "candlekeep:dispute");
+        request.addHeader(WOODY_META_ROLES, "candlekeep:questionnaire");
+        authenticate("Candlekeep");
+
+        var headers = TraceHeaderNormalizer.normalizeRequest(request);
+
+        assertFalse(headers.containsHeader(WOODY_META_ROLES));
+    }
+
+    @Test
+    void shouldDropClientSuppliedRolesWithoutAuthentication() {
+        var request = new MockHttpServletRequest();
+        request.addHeader("Woody.Meta.User-Identity.Roles", "candlekeep:dispute");
+
+        var headers = TraceHeaderNormalizer.normalizeRequest(request);
+
+        assertFalse(headers.containsHeader(WOODY_META_ROLES));
+    }
+
+    @Test
     void shouldNormalizeWoodyResponseHeadersOnly() {
         var response = new HttpHeaders();
         response.add(WOODY_TRACE_ID, "trace-id");
@@ -98,5 +134,15 @@ class TraceHeaderNormalizerTest {
                 () -> assertEquals("john@example.com", headers.getFirst(ExternalHeaders.X_WOODY_META_EMAIL)),
                 () -> assertFalse(headers.containsHeader("traceparent")),
                 () -> assertFalse(headers.containsHeader("content-type")));
+    }
+
+    private void authenticate(String... roles) {
+        var jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .subject("jwt-user")
+                .claim("email", "john@example.com")
+                .build();
+        var authorities = Arrays.stream(roles).map(SimpleGrantedAuthority::new).toList();
+        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt, authorities));
     }
 }
