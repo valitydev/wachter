@@ -1,6 +1,7 @@
 package dev.vality.wachter.client;
 
 import dev.vality.wachter.tracing.TraceHeaderNormalizer;
+import dev.vality.wachter.tracing.TraceHeaders;
 import dev.vality.wachter.tracing.WoodyTraceContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 import java.util.Objects;
@@ -23,16 +25,19 @@ public class WachterClient {
 
     private static final byte[] EMPTY_BODY = new byte[0];
 
-    public WachterClientResponse send(HttpServletRequest servletRequest, byte[] contentData, String url) {
-        var httpMethod = resolveMethod(servletRequest);
-
+    public WachterClientResponse send(HttpServletRequest servletRequest, byte[] contentData, String url,
+                                      String forwardedRoles) {
         var proxyHeaders = ProxyHeadersExtractor.extractHeaders(servletRequest);
         var traceHeaders = WoodyTraceContext.extractHeaders();
 
         var httpHeaders = new HttpHeaders();
         proxyHeaders.forEach(httpHeaders::addAll);
         httpHeaders.addAll(traceHeaders);
+        if (StringUtils.hasText(forwardedRoles)) {
+            httpHeaders.set(TraceHeaders.WOODY_META_ROLES, forwardedRoles);
+        }
 
+        var httpMethod = resolveMethod(servletRequest);
         log.info("-> Send request to {} {} | headers: {}", httpMethod, url, httpHeaders);
 
         var requestSpec = restClient.method(httpMethod)

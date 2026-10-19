@@ -5,7 +5,7 @@ import dev.vality.wachter.mapper.ServiceMapper;
 import dev.vality.wachter.security.AccessData;
 import dev.vality.wachter.security.AccessService;
 import dev.vality.wachter.security.JwtTokenDetailsExtractor;
-import dev.vality.wachter.security.UserRolesForwarder;
+import dev.vality.wachter.security.ForwardedRolesResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -25,7 +25,7 @@ public class WachterService {
     private final WachterClient wachterClient;
     private final ServiceMapper serviceMapper;
     private final MethodNameReaderService methodNameReaderService;
-    private final UserRolesForwarder userRolesForwarder;
+    private final ForwardedRolesResolver forwardedRolesResolver;
 
     @SneakyThrows
     public WachterClientResponse process(HttpServletRequest request) {
@@ -41,8 +41,8 @@ public class WachterService {
                 .serviceName(service.getName())
                 .tokenRoles(tokenDetails.roles())
                 .build());
-        userRolesForwarder.forwardRoles(service, tokenDetails.roles());
-        return wachterClient.send(request, contentData, service.getUrl());
+        var forwardedRoles = forwardedRolesResolver.resolveForwardedRoles(service, tokenDetails.roles());
+        return wachterClient.send(request, contentData, service.getUrl(), forwardedRoles);
     }
 
     @SneakyThrows

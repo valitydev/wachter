@@ -91,7 +91,7 @@ class TraceHeaderNormalizerTest {
 
         var headers = TraceHeaderNormalizer.normalizeRequest(request);
 
-        // JWT roles are added only once the target service is known, see UserRolesForwarder
+        // JWT roles are added only once the target service is known, see ForwardedRolesResolver
         assertFalse(headers.containsHeader(WOODY_META_ROLES));
     }
 

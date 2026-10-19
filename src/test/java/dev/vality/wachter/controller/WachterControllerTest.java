@@ -58,7 +58,7 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
     @Test
     @SneakyThrows
     void requestSuccessWithServiceRole() {
-        when(wachterClient.send(any(), any(), any()))
+        when(wachterClient.send(any(), any(), any(), any()))
                 .thenReturn(new WachterClientResponse(HttpStatus.OK, new HttpHeaders(), new byte[0]));
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
@@ -68,13 +68,13 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
-        verify(wachterClient, times(1)).send(any(), any(), any());
+        verify(wachterClient, times(1)).send(any(), any(), any(), any());
     }
 
     @Test
     @SneakyThrows
     void requestSuccessWithMethodRole() {
-        when(wachterClient.send(any(), any(), any()))
+        when(wachterClient.send(any(), any(), any(), any()))
                 .thenReturn(new WachterClientResponse(HttpStatus.OK, new HttpHeaders(), new byte[0]));
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
@@ -84,13 +84,13 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
-        verify(wachterClient, times(1)).send(any(), any(), any());
+        verify(wachterClient, times(1)).send(any(), any(), any(), any());
     }
 
     @Test
     @SneakyThrows
     void requestSuccessWithWoodyHeaders() {
-        when(wachterClient.send(any(), any(), any()))
+        when(wachterClient.send(any(), any(), any(), any()))
                 .thenReturn(new WachterClientResponse(HttpStatus.OK, new HttpHeaders(), new byte[0]));
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
@@ -104,13 +104,13 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
-        verify(wachterClient, times(1)).send(any(), any(), any());
+        verify(wachterClient, times(1)).send(any(), any(), any(), any());
     }
 
     @Test
     @SneakyThrows
     void requestSuccessWithWoodyWithDashHeaders() {
-        when(wachterClient.send(any(), any(), any()))
+        when(wachterClient.send(any(), any(), any(), any()))
                 .thenReturn(new WachterClientResponse(HttpStatus.OK, new HttpHeaders(), new byte[0]));
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithRoles())
@@ -124,7 +124,7 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
-        verify(wachterClient, times(1)).send(any(), any(), any());
+        verify(wachterClient, times(1)).send(any(), any(), any(), any());
     }
 
     @Test
@@ -133,7 +133,7 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
         final var headers = new HttpHeaders();
         headers.set("X-Upstream", "value");
         final var body = "failure".getBytes();
-        when(wachterClient.send(any(), any(), any()))
+        when(wachterClient.send(any(), any(), any(), any()))
                 .thenReturn(new WachterClientResponse(HttpStatus.BAD_GATEWAY, headers, body));
 
         mvc.perform(post("/wachter")
@@ -146,6 +146,6 @@ class WachterControllerTest extends AbstractKeycloakOpenIdAsWiremockConfig {
                 .andExpect(status().isBadGateway())
                 .andExpect(header().string("X-Upstream", "value"))
                 .andExpect(content().bytes(body));
-        verify(wachterClient, times(1)).send(any(), any(), any());
+        verify(wachterClient, times(1)).send(any(), any(), any(), any());
     }
 }
