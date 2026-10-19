@@ -50,4 +50,8 @@ public abstract class AbstractKeycloakOpenIdAsWiremockConfig {
     protected String generateSimpleJwtWithoutRoles() {
         return keycloakOpenIdStub.generateJwt();
     }
+
+    protected String generateJwtWithRoles(String... roles) {
+        return keycloakOpenIdStub.generateJwt(roles);
+    }
 }

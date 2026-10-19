@@ -15,6 +15,8 @@ public class TraceHeaders {
     public static final String WOODY_META_USERNAME = WOODY_META_PREFIX + "user-identity.username";
     public static final String WOODY_META_EMAIL = WOODY_META_PREFIX + "user-identity.email";
     public static final String WOODY_META_REALM = WOODY_META_PREFIX + "user-identity.realm";
+    public static final String USER_IDENTITY_ROLES = "user-identity.roles";
+    public static final String WOODY_META_ROLES = WOODY_META_PREFIX + USER_IDENTITY_ROLES;
     public static final String WOODY_META_REQUEST_ID = WOODY_META_PREFIX + "user-identity.X-Request-ID";
     public static final String WOODY_META_REQUEST_DEADLINE =
             WOODY_META_PREFIX + "user-identity.X-Request-Deadline";
@@ -39,5 +41,6 @@ public class TraceHeaders {
         public static final String X_WOODY_META_USERNAME = X_WOODY_META_PREFIX + "user-identity-username";
         public static final String X_WOODY_META_EMAIL = X_WOODY_META_PREFIX + "user-identity-email";
         public static final String X_WOODY_META_REALM = X_WOODY_META_PREFIX + "user-identity-realm";
+        public static final String X_WOODY_META_ROLES = X_WOODY_META_PREFIX + "user-identity-roles";
     }
 }

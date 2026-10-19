@@ -25,6 +25,8 @@ public class TraceHeaderNormalizer {
         copy(normalized, WOODY_META_REQUEST_ID, request.getHeader(ExternalHeaders.X_REQUEST_ID));
         copy(normalized, WOODY_META_REQUEST_INVOICE_ID, request.getHeader(ExternalHeaders.X_INVOICE_ID));
         normalizeDeadline(request, normalized);
+        // Roles are trusted by upstream services, so they may only come from the verified JWT,
+        normalized.remove(WOODY_META_ROLES);
         mergeJwt(normalized);
         var headers = new HttpHeaders();
         normalized.forEach(headers::set);

@@ -59,7 +59,7 @@ class WachterControllerDisabledAuthTest extends AbstractKeycloakOpenIdAsWiremock
     @Test
     @SneakyThrows
     void requestSuccess() {
-        when(wachterClient.send(any(), any(), any()))
+        when(wachterClient.send(any(), any(), any(), any()))
                 .thenReturn(new WachterClientResponse(HttpStatus.OK, new HttpHeaders(), new byte[0]));
         mvc.perform(post("/wachter")
                         .header("Authorization", "Bearer " + generateSimpleJwtWithoutRoles())
@@ -69,7 +69,7 @@ class WachterControllerDisabledAuthTest extends AbstractKeycloakOpenIdAsWiremock
                         .content(TMessageUtil.createTMessage(protocolFactory)))
                 .andDo(print())
                 .andExpect(status().is2xxSuccessful());
-        verify(wachterClient, times(1)).send(any(), any(), any());
+        verify(wachterClient, times(1)).send(any(), any(), any(), any());
     }
 
 }

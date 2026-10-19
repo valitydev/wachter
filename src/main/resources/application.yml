@@ -123,6 +123,12 @@ wachter:
     DMTClient:
       name: DMTClient
       url: http://dmt.default:8022/v1/domain/repository_client
+    Candlekeep:
+      name: Candlekeep
+      url: http://candlekeep:8022/v1/candlekeep
+      # candlekeep:<category> roles decide which document categories a user may see
+      forwarded-role-prefixes:
+        - "candlekeep:"
 
 auth:
   enabled: true

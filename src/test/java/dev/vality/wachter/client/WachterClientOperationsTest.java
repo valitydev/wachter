@@ -11,6 +11,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 import static dev.vality.wachter.tracing.TraceHeaders.ExternalHeaders.X_WOODY_TRACE_ID;
+import static dev.vality.wachter.tracing.TraceHeaders.WOODY_META_ROLES;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
@@ -45,10 +46,53 @@ class WachterClientOperationsTest {
         final var client = new WachterClient(restClient);
 
         final var actualResponse = new WFlow().createServiceFork(
-                () -> client.send(servletRequest, payload, "http://upstream")).call();
+                () -> client.send(servletRequest, payload, "http://upstream", "")).call();
 
         assertEquals(HttpStatus.OK, actualResponse.statusCode());
         assertArrayEquals(expectedResponse, actualResponse.body());
+        server.verify();
+    }
+
+    @Test
+    void shouldSendForwardedRolesHeader() throws Exception {
+        final var builder = RestClient.builder();
+        final var server = MockRestServiceServer.bindTo(builder).build();
+        final var restClient = builder.build();
+
+        final var servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
+        final var payload = "payload".getBytes();
+
+        server.expect(requestTo("http://upstream/candlekeep"))
+                .andExpect(header(WOODY_META_ROLES, "candlekeep:dispute,candlekeep:payment_proof"))
+                .andRespond(withSuccess());
+
+        final var client = new WachterClient(restClient);
+
+        new WFlow().createServiceFork(() -> client.send(servletRequest, payload, "http://upstream/candlekeep",
+                "candlekeep:dispute,candlekeep:payment_proof")).call();
+
+        server.verify();
+    }
+
+    @Test
+    void shouldNotSendEmptyForwardedRolesHeader() throws Exception {
+        final var builder = RestClient.builder();
+        final var server = MockRestServiceServer.bindTo(builder).build();
+        final var restClient = builder.build();
+
+        final var servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
+        final var payload = "payload".getBytes();
+
+        server.expect(requestTo("http://upstream"))
+                .andExpect(headerDoesNotExist(WOODY_META_ROLES))
+                .andRespond(withSuccess());
+
+        final var client = new WachterClient(restClient);
+
+        new WFlow().createServiceFork(() -> client.send(servletRequest, payload, "http://upstream", "")).call();
+
         server.verify();
     }
 
@@ -76,7 +120,7 @@ class WachterClientOperationsTest {
         final var client = new WachterClient(restClient);
 
         new WFlow().createServiceFork(
-                () -> client.send(servletRequest, null, "http://upstream/disallowed")).call();
+                () -> client.send(servletRequest, null, "http://upstream/disallowed", "")).call();
 
         server.verify();
     }
@@ -97,7 +141,7 @@ class WachterClientOperationsTest {
         final var client = new WachterClient(restClient);
 
         final var response = new WFlow().createServiceFork(
-                () -> client.send(servletRequest, null, "http://upstream/resource")).call();
+                () -> client.send(servletRequest, null, "http://upstream/resource", "")).call();
 
         assertEquals(HttpStatus.OK, response.statusCode());
         assertArrayEquals("{}".getBytes(), response.body());
@@ -123,7 +167,7 @@ class WachterClientOperationsTest {
         final var client = new WachterClient(restClient);
 
         final var response = new WFlow().createServiceFork(
-                () -> client.send(servletRequest, payload, "http://upstream/fail")).call();
+                () -> client.send(servletRequest, payload, "http://upstream/fail", "")).call();
 
         assertEquals(HttpStatus.BAD_GATEWAY, response.statusCode());
         assertArrayEquals("bad-gateway".getBytes(), response.body());

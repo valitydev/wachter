@@ -39,6 +39,13 @@ Wachter поддерживает внутренние заголовки `woody.
 
 Эти значения доступны как Woody custom metadata и публикуются в MDC с префиксом `rpc.server.metadata.`. Заголовки `X-Request-ID`, `X-Request-Deadline` и `X-Invoice-ID` также преобразуются в Woody metadata.
 
+Сервисам, у которых задан `wachter.services.<Service>.forwarded-role-prefixes`, в запрос дополнительно добавляется
+заголовок `woody.meta.user-identity.roles`: роли JWT с этими префиксами через запятую. Так сервис может ограничивать
+доступ внутри своих данных: например, candlekeep получает роли `candlekeep:<category>` и по ним решает, какие категории
+документов доступны пользователю. Остальные сервисы ролей не получают. В Woody metadata и MDC роли не попадают.
+Значение берётся только из JWT: присланный клиентом `user-identity.roles` (`x-woody-meta-user-identity-roles` или
+`woody.meta.user-identity.roles`) всегда отбрасывается.
+
 ## OpenTelemetry
 
 W3C trace context (`traceparent` и `tracestate`) обрабатывает OpenTelemetry Java Agent. Сборка помещает agent в runtime image и запускает приложение с параметром `-javaagent`. Wachter не создаёт OTEL span вручную и не переносит эти заголовки как обычные proxy-заголовки.
